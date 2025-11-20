@@ -104,7 +104,7 @@ Alle Zahlungsprozesse basieren auf **Mock-Daten** (keine echten Transaktionen).
 ### Realtime
 - WebSockets oder Firebase für Chat  
 - Faker.js
-- 
+- Prisma
 
 ---
 
