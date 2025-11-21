@@ -1,0 +1,37 @@
+name: Branch Naming Convention Check
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate branch name
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+
+          # Allowed patterns
+          # feature/#123-description
+          # bugfix/#456-description
+          # hotfix/#789-description
+          # admin-area
+          # admin-dashboard
+
+          if [[ $BRANCH_NAME =~ ^(feature|bugfix|hotfix)/#[0-9]+-[a-z0-9-]+$ ]] || \
+             [[ $BRANCH_NAME =~ ^admin-[a-z0-9-]+$ ]] || \
+             [[ $BRANCH_NAME =~ ^(main|develop|staging)$ ]]; then
+            echo "✅ Branch name '$BRANCH_NAME' follows naming convention"
+            exit 0
+          else
+            echo "❌ Branch name '$BRANCH_NAME' does not follow naming convention"
+            echo ""
+            echo "Allowed patterns:"
+            echo "  feature/#123-description"
+            echo "  bugfix/#456-description"
+            echo "  hotfix/#789-description"
+            echo "  admin-area"
+            echo "  admin-dashboard"
+            exit 1
+          fi
