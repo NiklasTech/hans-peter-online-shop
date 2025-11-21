@@ -45,3 +45,5 @@ postgres_data
 .idea
 
 /app/generated/prisma
+
+package-lock.json

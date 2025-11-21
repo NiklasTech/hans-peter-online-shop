@@ -14,20 +14,25 @@ datasource db {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
-  email     String  @unique
-  name      String
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isAdmin   Boolean @default(false)
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  name             String
+  password         String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isAdmin          Boolean  @default(false)
+  defaultAddressId Int?     @unique
+  defaultSupplier  String?
+  defaultPayment   String?
 
-  orders     Order[]
-  cart       CartItem[]
-  wishlists  Wishlist[]
-  reviews    Review[]
-  chats      SupportChat[]
-  messages   ChatMessage[]
+  orders         Order[]
+  cart           CartItem[]
+  wishlists      Wishlist[]
+  reviews        Review[]
+  chats          SupportChat[]
+  messages       ChatMessage[]
+  addresses      Address[]
+  defaultAddress Address?       @relation("DefaultAddress", fields: [defaultAddressId], references: [id], onDelete: SetNull)
 }
 
 model Product {
@@ -168,4 +173,24 @@ model ProductImage {
 
   @@unique([productId, index])
   @@index([productId])
+}
+
+model Address {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  street      String
+  houseNumber String
+  city        String
+  postalCode  String
+  countryCode String   @default("DE")
+  firstName   String
+  lastName    String
+  phone       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultForUser User?   @relation("DefaultAddress")
+
+  @@index([userId])
 }
