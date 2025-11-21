@@ -1,0 +1,25 @@
+name: Auto-close Issue on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  close-issue:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract issue number from branch
+        id: issue
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          # Extrahiert Issue-Nummer aus feature/#123-description
+          ISSUE=$(echo $BRANCH | grep -oP '(?<=#)\d+' | head -1)
+          echo "issue_number=$ISSUE" >> $GITHUB_OUTPUT
+
+      - name: Close issue
+        if: steps.issue.outputs.issue_number != ''
+        run: |
+          gh issue close ${{ steps.issue.outputs.issue_number }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

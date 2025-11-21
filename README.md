@@ -87,12 +87,13 @@ git branch -d feature/#1-navbar
 - `bugfix/#10-cart-error`
 - `hotfix/#20-payment-issue`
 - `admin-dashboard`
-- `main`
+- Groß-/Kleinschreibung ist egal
+- Minuse sind erlaubt
 
 ❌ **Not Allowed:**
-- `my-feature` (no issue number)
-- `fix-bug` (wrong format)
-- Direct commits to `main` (use PR instead)
+- `my-feature` (keine Issue-Nummer)
+- `fix-bug` (falsches Format)
+- Direct commits zu `main` (PR verwenden)
 
 ### Common Commands
 
