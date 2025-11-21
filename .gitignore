@@ -43,3 +43,5 @@ next-env.d.ts
 postgres_data
 
 .idea
+
+/app/generated/prisma
