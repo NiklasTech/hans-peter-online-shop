@@ -10,17 +10,17 @@ jobs:
     steps:
       - name: Validate branch name
         run: |
+          shopt -s nocasematch
           BRANCH_NAME="${{ github.head_ref }}"
 
-          # Allowed patterns
+          # Allowed patterns (case-insensitive, minuses allowed)
           # feature/#123-description
           # bugfix/#456-description
           # hotfix/#789-description
-          # admin-area
-          # admin-dashboard
+          # admin-anything
 
           if [[ $BRANCH_NAME =~ ^(feature|bugfix|hotfix)/#[0-9]+-[a-z0-9-]+$ ]] || \
-             [[ $BRANCH_NAME =~ ^admin-[a-z0-9-]+$ ]] || \
+             [[ $BRANCH_NAME =~ ^admin-.+$ ]] || \
              [[ $BRANCH_NAME =~ ^(main|develop|staging)$ ]]; then
             echo "✅ Branch name '$BRANCH_NAME' follows naming convention"
             exit 0
@@ -31,7 +31,6 @@ jobs:
             echo "  feature/#123-description"
             echo "  bugfix/#456-description"
             echo "  hotfix/#789-description"
-            echo "  admin-area"
-            echo "  admin-dashboard"
+            echo "  admin-anything"
             exit 1
           fi
