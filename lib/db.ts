@@ -3,20 +3,17 @@
  *
  * This module handles the database connection setup and exports
  * a database client/connection pool for use throughout the application.
- *
- * TODO: Configure with appropriate database (PostgreSQL, MySQL, MongoDB, etc.)
  */
 
-// TODO: Initialize database connection
-// Example for Prisma:
-// import { PrismaClient } from "@prisma/client";
-// export const db = new PrismaClient();
+import { PrismaClient } from "@/app/generated/prisma/client";
 
-// Example for direct database driver:
-// import postgres from "postgres";
-// export const db = postgres(process.env.DATABASE_URL!);
-
-export const db = {
-  // Placeholder for database client
-  // Replace with actual database connection
+const globalForPrisma = globalThis as unknown as {
+  prisma: typeof PrismaClient.prototype | undefined;
 };
+
+// @ts-expect-error - Prisma Client constructor signature issue
+export const db = globalForPrisma.prisma ?? new PrismaClient();
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = db;
+}
