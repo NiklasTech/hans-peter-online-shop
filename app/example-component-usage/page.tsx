@@ -130,7 +130,7 @@ export default function Home() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                <BreadcrumbLink href="/public">Home</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -322,7 +322,7 @@ export default function Home() {
               <Slider
                 value={sliderValue}
                 onValueChange={setSliderValue}
-                max={100}
+                max={10000000000}
                 step={1}
                 className="w-full"
               />
