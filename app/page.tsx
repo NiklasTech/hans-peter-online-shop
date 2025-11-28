@@ -4,6 +4,7 @@ import ProductSection from "@/components/ProductSection";
 import { CategorieSection } from "@/components/CategorieSection";
 import { BrandSection } from "@/components/BrandSection";
 import Banner from "@/components/Banner";
+import Footer from "@/components/Footer";
 
 // Placeholder products data. Später wird dies von der Datenbank kommen
 const featuredProducts = [
@@ -134,6 +135,7 @@ export default function Home() {
           <BrandSection title="Unsere Marken" brands={brands} />
         </div>
       </main>
+      <Footer />
     </>
   );
 }
