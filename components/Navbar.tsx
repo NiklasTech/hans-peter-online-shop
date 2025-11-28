@@ -86,22 +86,22 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-6">
+      <nav className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 sticky top-0 z-40">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between gap-4 sm:gap-6">
             {/* Logo */}
             <Link href="/">
-              <div className="shrink-0 font-bold text-xl dark:text-white cursor-pointer hover:opacity-80 transition">
+              <div className="shrink-0 font-bold text-xl text-gray-900 dark:text-white cursor-pointer hover:opacity-80 transition">
                 Hans Peter Shop
               </div>
             </Link>
 
             {/* Navigation Menu - Desktop */}
-            <NavigationMenu className="hidden md:flex">
+            <NavigationMenu className="hidden lg:flex">
               <NavigationMenuList>
                 {categories.map((category) => (
                   <NavigationMenuItem key={category.name}>
-                    <NavigationMenuTrigger className="text-sm font-medium">
+                    <NavigationMenuTrigger className="text-sm font-medium text-gray-900 dark:text-white">
                       {category.name}
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
@@ -109,7 +109,7 @@ export default function Navbar() {
                         {category.subcategories.map((sub) => (
                           <Link key={sub.href} href={sub.href}>
                             <NavigationMenuLink asChild>
-                              <span className="block px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition">
+                              <span className="block px-3 py-2 text-sm text-gray-900 dark:text-white rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition">
                                 {sub.name}
                               </span>
                             </NavigationMenuLink>
@@ -135,7 +135,7 @@ export default function Navbar() {
             </button>
 
             {/* Search Bar */}
-            <div className="flex-1 max-w-md">
+            <div className="hidden sm:flex flex-1 max-w-md">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -152,7 +152,7 @@ export default function Navbar() {
               <Popover>
                 <PopoverTrigger asChild>
                   <div className="relative cursor-pointer hover:opacity-80 transition">
-                    <ShoppingCart className="h-6 w-6 dark:text-white" />
+                    <ShoppingCart className="h-6 w-6 text-gray-900 dark:text-white" />
                     <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
                       0
                     </span>
