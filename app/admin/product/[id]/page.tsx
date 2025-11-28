@@ -20,7 +20,7 @@ export default function EditProductPage({
 
   return (
     <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Produkt bearbeiten</h1>
+      <h1 className="text-3xl font-bold mb-6 space-y-6 max-w-4xl mx-auto">Produkt bearbeiten</h1>
       <ProductForm productId={productId} isEditing={true} />
     </div>
   );

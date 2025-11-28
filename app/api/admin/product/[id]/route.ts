@@ -1,5 +1,5 @@
 /**
- * API Route: /api/products/[id]
+ * API Route: /api/admin/products/[id]
  *
  * GET    - Fetch a single product by ID
  * PUT    - Update a product by ID
@@ -30,6 +30,13 @@ export async function GET(
         images: {
           orderBy: { index: "asc" },
         },
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+        brand: true,
+        details: true,
       },
     });
 
@@ -66,7 +73,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, description, price, stock, previewImage, images } = body;
+    const { name, description, price, stock, categoryIds, brandId, previewImage, images, details } = body;
 
     // Prüfen ob Produkt existiert
     const existingProduct = await db.product.findUnique({
@@ -88,6 +95,7 @@ export async function PUT(
         description: description !== undefined ? description : undefined,
         price: price !== undefined ? parseFloat(price) : undefined,
         stock: stock !== undefined ? parseInt(stock) : undefined,
+        brandId: brandId !== undefined ? parseInt(brandId) : undefined,
         previewImage: previewImage !== undefined ? previewImage : undefined,
         images: images
           ? {
@@ -98,11 +106,37 @@ export async function PUT(
               })),
             }
           : undefined,
+        categories: categoryIds
+          ? {
+              deleteMany: {},
+              create: categoryIds.map((categoryId: number) => ({
+                categoryId: parseInt(categoryId.toString()),
+              })),
+            }
+          : undefined,
+        details: details
+          ? {
+              deleteMany: {},
+              create: details
+                .filter((d: { key: string; value: string }) => d.key && d.value)
+                .map((d: { key: string; value: string }) => ({
+                  key: d.key,
+                  value: d.value,
+                })),
+            }
+          : undefined,
       },
       include: {
         images: {
           orderBy: { index: "asc" },
         },
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+        brand: true,
+        details: true,
       },
     });
 

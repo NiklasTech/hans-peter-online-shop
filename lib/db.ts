@@ -6,14 +6,32 @@
  */
 
 import { PrismaClient } from "@/app/generated/prisma/client";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: typeof PrismaClient.prototype | undefined;
+  prisma: PrismaClient | undefined;
+  pool: Pool | undefined;
 };
 
-// @ts-expect-error - Prisma Client constructor signature issue
-export const db = globalForPrisma.prisma ?? new PrismaClient();
+// Erstelle einen Pool für PostgreSQL-Verbindungen
+const pool =
+  globalForPrisma.pool ??
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+
+// Erstelle den Prisma Adapter
+const adapter = new PrismaPg(pool);
+
+// Erstelle den PrismaClient mit dem Adapter
+export const db =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    adapter,
+  });
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;
+  globalForPrisma.pool = pool;
 }

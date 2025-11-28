@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { X, Upload, GripVertical, Trash2 } from "lucide-react";
 import type { Product } from "@/types/product";
+import type { Category } from "@/types/category";
+import type { Brand } from "@/types/brand";
 
 interface ProductFormProps {
   productId?: number;
@@ -34,6 +36,12 @@ interface DetailRow {
   id: string;
   key: string;
   value: string;
+}
+
+interface CategoryRow {
+  id: string;
+  name: string;
+  categoryId?: number;
 }
 
 const DETAIL_KEY_SUGGESTIONS = [
@@ -59,16 +67,26 @@ export default function ProductForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Form-State
+  // Form State
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("");
+  const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([]);
+  const [brandName, setBrandName] = useState("");
+  const [brandId, setBrandId] = useState<number | null>(null);
   const [previewImage, setPreviewImage] = useState("");
   const [images, setImages] = useState<ProductImage[]>([]);
-  const [details, setDetails] = useState<DetailRow[]>([
-    { id: crypto.randomUUID(), key: "", value: "" },
-  ]);
+  const [details, setDetails] = useState<DetailRow[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  // Categories and Brands
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+
+  // Autocomplete State
+  const [categoryInputFocus, setCategoryInputFocus] = useState<string | null>(null);
+  const [brandInputFocus, setBrandInputFocus] = useState(false);
 
   // Drag & Drop State
   const [dragActive, setDragActive] = useState(false);
@@ -76,14 +94,99 @@ export default function ProductForm({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Produkt laden (bei Edit)
+  // Client-side initialization
+  useEffect(() => {
+    setIsClient(true);
+    if (details.length === 0) {
+      setDetails([{ id: crypto.randomUUID(), key: "", value: "" }]);
+    }
+    if (categoryRows.length === 0) {
+      setCategoryRows([{ id: crypto.randomUUID(), name: "" }]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Load categories and brands
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [categoriesRes, brandsRes] = await Promise.all([
+          fetch("/api/admin/categories"),
+          fetch("/api/admin/brands"),
+        ]);
+
+        if (categoriesRes.ok) {
+          const data = await categoriesRes.json();
+          setCategories(data.categories || []);
+        }
+
+        if (brandsRes.ok) {
+          const data = await brandsRes.json();
+          setBrands(data.brands || []);
+        }
+      } catch (error) {
+        console.error("Error fetching categories/brands:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Create new category
+  const handleCreateCategory = async (name: string, rowId: string) => {
+    try {
+      const response = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newCategory = data.category;
+        setCategories((prev) => [...prev, newCategory]);
+
+        // Update the corresponding row with the new Category-ID
+        setCategoryRows((prev) =>
+          prev.map((row) =>
+            row.id === rowId ? { ...row, name, categoryId: newCategory.id } : row
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error creating category:", error);
+    }
+  };
+
+  // Create new brand
+  const handleCreateBrand = async (name: string) => {
+    try {
+      const response = await fetch("/api/admin/brands", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newBrand = data.brand;
+        setBrands((prev) => [...prev, newBrand]);
+        setBrandName(newBrand.name);
+        setBrandId(newBrand.id);
+      }
+    } catch (error) {
+      console.error("Error creating brand:", error);
+    }
+  };
+
+  // Load product (for edit)
   const loadProduct = useCallback(async () => {
     if (!productId) return;
 
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/products/${productId}`);
+      const response = await fetch(`/api/admin/product?id=${productId}`);
       if (!response.ok) throw new Error("Produkt konnte nicht geladen werden");
 
       const data = await response.json();
@@ -93,6 +196,26 @@ export default function ProductForm({
       setDescription(product.description || "");
       setPrice(product.price.toString());
       setStock(product.stock.toString());
+
+      // Load categories
+      if (product.categories && product.categories.length > 0) {
+        const loadedCategories = product.categories.map((c: { categoryId: number; category?: { name: string } }) => ({
+          id: crypto.randomUUID(),
+          name: c.category?.name || "",
+          categoryId: c.categoryId,
+        }));
+        // Add empty row
+        setCategoryRows([...loadedCategories, { id: crypto.randomUUID(), name: "" }]);
+      }
+
+      // Load brand
+      setBrandId(product.brandId);
+      // Wait until brands are loaded, then set brandName
+      const brand = brands.find(b => b.id === product.brandId);
+      if (brand) {
+        setBrandName(brand.name);
+      }
+
       setPreviewImage(product.previewImage || "");
 
       if (product.images) {
@@ -104,12 +227,23 @@ export default function ProductForm({
           }))
         );
       }
+
+      // Load details
+      if (product.details && product.details.length > 0) {
+        const loadedDetails = product.details.map((d: { id: number; key: string; value: string }) => ({
+          id: crypto.randomUUID(),
+          key: d.key,
+          value: d.value,
+        }));
+        // Add empty row
+        setDetails([...loadedDetails, { id: crypto.randomUUID(), key: "", value: "" }]);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ein Fehler ist aufgetreten");
     } finally {
       setLoading(false);
     }
-  }, [productId]);
+  }, [productId, brands]);
 
   useEffect(() => {
     if (isEditing && productId) {
@@ -117,12 +251,18 @@ export default function ProductForm({
     }
   }, [isEditing, productId, loadProduct]);
 
-  // Bildupload
+  // Image upload
   const uploadImage = async (file: File): Promise<string> => {
+    if (!productId) {
+      throw new Error("Product ID is required for image upload");
+    }
+
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("productId", productId.toString());
+    formData.append("id", productId.toString());
 
-    const response = await fetch("/api/upload", {
+    const response = await fetch("/api/admin/product/imageUpload", {
       method: "POST",
       body: formData,
     });
@@ -136,9 +276,15 @@ export default function ProductForm({
     return data.url;
   };
 
-  // Dateien hinzufügen
+  // Add files
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+
+    // Check if productId exists
+    if (!productId) {
+      setError("Bitte speichern Sie das Produkt zuerst, bevor Sie Bilder hochladen.");
+      return;
+    }
 
     const newImages: ProductImage[] = [];
 
@@ -154,7 +300,7 @@ export default function ProductForm({
 
       newImages.push(newImage);
 
-      // Upload im Hintergrund
+      // Upload in background
       uploadImage(file)
         .then((url) => {
           setImages((prev) =>
@@ -167,6 +313,7 @@ export default function ProductForm({
         })
         .catch((err) => {
           console.error("Upload error:", err);
+          setError(err.message || "Fehler beim Hochladen des Bildes");
           setImages((prev) => prev.filter((img) => img.url !== newImage.url));
         });
     });
@@ -195,7 +342,7 @@ export default function ProductForm({
     }
   };
 
-  // Bild-Reihenfolge ändern
+  // Change image order
   const handleImageDragStart = (index: number) => {
     setDraggedImageIndex(index);
   };
@@ -209,7 +356,7 @@ export default function ProductForm({
     newImages.splice(draggedImageIndex, 1);
     newImages.splice(index, 0, draggedImage);
 
-    // Indizes aktualisieren
+    // Update indices
     newImages.forEach((img, idx) => {
       img.index = idx;
     });
@@ -222,16 +369,105 @@ export default function ProductForm({
     setDraggedImageIndex(null);
   };
 
-  // Bild entfernen
+  // Remove image
   const removeImage = (index: number) => {
     setImages((prev) => {
       const newImages = prev.filter((_, i) => i !== index);
-      // Indizes neu zuweisen
+      // Reassign indices
       return newImages.map((img, idx) => ({ ...img, index: idx }));
     });
   };
 
-  // Detail-Zeilen verwalten
+  // Manage category rows
+  const updateCategoryRow = (id: string, value: string) => {
+    setCategoryRows((prev) =>
+      prev.map((row) => {
+        if (row.id === id) {
+          // Search for existing category
+          const existingCategory = categories.find(
+            (cat) => cat.name.toLowerCase() === value.toLowerCase()
+          );
+
+          return {
+            ...row,
+            name: value,
+            categoryId: existingCategory?.id,
+          };
+        }
+        return row;
+      })
+    );
+
+    // If last row is edited, add new row
+    const rowIndex = categoryRows.findIndex((r) => r.id === id);
+    if (rowIndex === categoryRows.length - 1 && value.trim() !== "") {
+      setCategoryRows((prev) => [
+        ...prev,
+        { id: crypto.randomUUID(), name: "" },
+      ]);
+    }
+  };
+
+  const removeCategoryRow = (id: string) => {
+    setCategoryRows((prev) => {
+      const filtered = prev.filter((row) => row.id !== id);
+      // Keep at least one empty row
+      return filtered.length === 0
+        ? [{ id: crypto.randomUUID(), name: "" }]
+        : filtered;
+    });
+  };
+
+  const handleCategoryBlur = async (id: string, value: string) => {
+    if (!value.trim()) return;
+
+    const row = categoryRows.find((r) => r.id === id);
+    if (!row?.categoryId) {
+      // Category doesn't exist, create it
+      await handleCreateCategory(value.trim(), id);
+    }
+  };
+
+  // Brand Input Handler
+  const handleBrandChange = (value: string) => {
+    setBrandName(value);
+
+    // Search for existing brand
+    const existingBrand = brands.find(
+      (b) => b.name.toLowerCase() === value.toLowerCase()
+    );
+
+    if (existingBrand) {
+      setBrandId(existingBrand.id);
+    } else {
+      setBrandId(null);
+    }
+  };
+
+  const handleBrandBlur = async () => {
+    if (!brandName.trim()) return;
+
+    if (!brandId) {
+      // Brand doesn't exist, create it
+      await handleCreateBrand(brandName.trim());
+    }
+  };
+
+  const getBrandSuggestions = () => {
+    if (!brandName) return brands;
+    return brands.filter((b) =>
+      b.name.toLowerCase().includes(brandName.toLowerCase())
+    );
+  };
+
+  const getCategorySuggestions = (inputValue: string) => {
+    if (!inputValue) return categories;
+    return categories.filter((c) =>
+      c.name.toLowerCase().includes(inputValue.toLowerCase())
+    );
+  };
+
+  // Manage detail rows
   const updateDetail = (id: string, field: "key" | "value", value: string) => {
     setDetails((prev) =>
       prev.map((detail) =>
@@ -239,7 +475,7 @@ export default function ProductForm({
       )
     );
 
-    // Wenn letzte Zeile bearbeitet wird, neue Zeile hinzufügen
+    // If last row is edited, add new row
     const detailIndex = details.findIndex((d) => d.id === id);
     if (detailIndex === details.length - 1 && (value.trim() !== "")) {
       setDetails((prev) => [
@@ -252,14 +488,14 @@ export default function ProductForm({
   const removeDetail = (id: string) => {
     setDetails((prev) => {
       const filtered = prev.filter((detail) => detail.id !== id);
-      // Mindestens eine leere Zeile behalten
+      // Keep at least one empty row
       return filtered.length === 0
         ? [{ id: crypto.randomUUID(), key: "", value: "" }]
         : filtered;
     });
   };
 
-  // Formular absenden
+  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -267,23 +503,30 @@ export default function ProductForm({
     setSuccess(false);
 
     try {
-      // Validierung
+      // Validation
       if (!name.trim()) throw new Error("Name ist erforderlich");
       if (!price || parseFloat(price) < 0) throw new Error("Preis muss positiv sein");
       if (!stock || parseInt(stock) < 0) throw new Error("Lagerbestand muss positiv sein");
 
-      // Warte auf alle Uploads
+      const validCategories = categoryRows.filter((row) => row.name.trim() && row.categoryId);
+      if (validCategories.length === 0) throw new Error("Mindestens eine Kategorie ist erforderlich");
+
+      if (!brandId) throw new Error("Marke ist erforderlich");
+
+      // Wait for all uploads
       const pendingUploads = images.filter((img) => img.uploading);
       if (pendingUploads.length > 0) {
         throw new Error("Bitte warten Sie, bis alle Bilder hochgeladen sind");
       }
 
-      // Daten vorbereiten
+      // Prepare data
       const productData = {
         name: name.trim(),
         description: description.trim() || null,
         price: parseFloat(price),
         stock: parseInt(stock),
+        categoryIds: validCategories.map((row) => row.categoryId!),
+        brandId: brandId,
         previewImage: previewImage.trim() || images[0]?.url || null,
         images: images.map((img) => ({
           url: img.url,
@@ -294,15 +537,13 @@ export default function ProductForm({
           .map((d) => ({ key: d.key.trim(), value: d.value.trim() })),
       };
 
-      const url = isEditing
-        ? `/api/products/${productId}`
-        : "/api/products";
+      const url = "/api/admin/product";
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productData),
+        body: JSON.stringify(isEditing ? { id: productId, ...productData } : productData),
       });
 
       if (!response.ok) {
@@ -310,11 +551,13 @@ export default function ProductForm({
         throw new Error(error.error || "Speichern fehlgeschlagen");
       }
 
+      const result = await response.json();
       setSuccess(true);
 
-      // Nach erfolgreicher Erstellung zur Produktliste navigieren
+      // After successful creation, redirect to product detail page
       setTimeout(() => {
-        router.push("/admin/products");
+        // For new product, redirect to edit page of created product
+        router.push(`/admin/product/${result.product.id}`);
       }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ein Fehler ist aufgetreten");
@@ -333,28 +576,28 @@ export default function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl mx-auto">
-      {/* Fehlermeldung */}
+      {/* Error message */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
-      {/* Erfolgsmeldung */}
+      {/* Success message */}
       {success && (
         <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
           Produkt erfolgreich {isEditing ? "aktualisiert" : "erstellt"}!
         </div>
       )}
 
-      {/* Basis-Informationen */}
+      {/* Basic Information */}
       <Card>
         <CardHeader>
           <CardTitle>Basis-Informationen</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="name">Produktname *</Label>
+            <Label htmlFor="name" className="m-1">Produktname *</Label>
             <Input
               id="name"
               value={name}
@@ -365,7 +608,7 @@ export default function ProductForm({
           </div>
 
           <div>
-            <Label htmlFor="description">Beschreibung</Label>
+            <Label htmlFor="description" className="m-1">Beschreibung</Label>
             <Textarea
               id="description"
               value={description}
@@ -377,7 +620,7 @@ export default function ProductForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Preis (€) *</Label>
+              <Label htmlFor="price" className="m-1">Preis (€) *</Label>
               <Input
                 id="price"
                 type="number"
@@ -391,7 +634,7 @@ export default function ProductForm({
             </div>
 
             <div>
-              <Label htmlFor="stock">Lagerbestand *</Label>
+              <Label htmlFor="stock" className="m-1">Lagerbestand *</Label>
               <Input
                 id="stock"
                 type="number"
@@ -405,7 +648,91 @@ export default function ProductForm({
           </div>
 
           <div>
-            <Label htmlFor="previewImage">Vorschaubild URL (optional)</Label>
+            <Label htmlFor="brand" className="m-1">Marke *</Label>
+            <div className="relative">
+              <Input
+                id="brand"
+                value={brandName}
+                onChange={(e) => handleBrandChange(e.target.value)}
+                onFocus={() => setBrandInputFocus(true)}
+                onBlur={() => {
+                  setTimeout(() => setBrandInputFocus(false), 200);
+                  handleBrandBlur();
+                }}
+                placeholder="Marke eingeben oder auswählen"
+                list="brand-suggestions"
+                required
+              />
+              {brandInputFocus && getBrandSuggestions().length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                  {getBrandSuggestions().map((brand) => (
+                    <div
+                      key={brand.id}
+                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      onMouseDown={() => {
+                        setBrandName(brand.name);
+                        setBrandId(brand.id);
+                        setBrandInputFocus(false);
+                      }}
+                    >
+                      {brand.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <Label className="m-1">Kategorien *</Label>
+            <div className="space-y-2">
+              {isClient && categoryRows.map((row, index) => (
+                <div key={row.id} className="flex gap-2 relative">
+                  <div className="flex-1 relative">
+                    <Input
+                      value={row.name}
+                      onChange={(e) => updateCategoryRow(row.id, e.target.value)}
+                      onFocus={() => setCategoryInputFocus(row.id)}
+                      onBlur={() => {
+                        setTimeout(() => setCategoryInputFocus(null), 200);
+                        handleCategoryBlur(row.id, row.name);
+                      }}
+                      placeholder="Kategorie eingeben"
+                    />
+                    {categoryInputFocus === row.id && getCategorySuggestions(row.name).length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
+                        {getCategorySuggestions(row.name).map((category) => (
+                          <div
+                            key={category.id}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            onMouseDown={() => {
+                              updateCategoryRow(row.id, category.name);
+                              setCategoryInputFocus(null);
+                            }}
+                          >
+                            {category.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {categoryRows.length > 1 && index < categoryRows.length - 1 && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => removeCategoryRow(row.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="previewImage" className="m-1">Vorschaubild URL (optional)</Label>
             <Input
               id="previewImage"
               value={previewImage}
@@ -416,31 +743,46 @@ export default function ProductForm({
         </CardContent>
       </Card>
 
-      {/* Bilder Upload */}
+      {/* Image Upload */}
       <Card>
         <CardHeader>
           <CardTitle>Produktbilder</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Note when no productId */}
+          {!productId && (
+            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg">
+              <p className="font-medium">Hinweis</p>
+              <p className="text-sm">
+                Bitte speichern Sie das Produkt zuerst, bevor Sie Bilder hochladen können.
+              </p>
+            </div>
+          )}
+
           {/* Drop Zone */}
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              dragActive
+              !productId
+                ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-50"
+                : dragActive
                 ? "border-blue-500 bg-blue-50"
-                : "border-gray-300 hover:border-gray-400"
+                : "border-gray-300 hover:border-gray-400 cursor-pointer"
             }`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() => fileInputRef.current?.click()}
+            onDragEnter={productId ? handleDrag : undefined}
+            onDragLeave={productId ? handleDrag : undefined}
+            onDragOver={productId ? handleDrag : undefined}
+            onDrop={productId ? handleDrop : undefined}
+            onClick={productId ? () => fileInputRef.current?.click() : undefined}
           >
-            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <Upload className={`w-12 h-12 mx-auto mb-4 ${productId ? "text-gray-400" : "text-gray-300"}`} />
             <p className="text-lg font-medium mb-2">
-              Bilder hier ablegen oder klicken zum Auswählen
+              {productId
+                ? "Bilder hier ablegen oder klicken zum Auswählen"
+                : "Produkt muss zuerst gespeichert werden"
+              }
             </p>
             <p className="text-sm text-gray-500">
-              Unterstützt: JPG, PNG, GIF, WebP (max. 5MB)
+              {productId ? "max. 50MiB" : ""}
             </p>
             <input
               ref={fileInputRef}
@@ -449,10 +791,11 @@ export default function ProductForm({
               accept="image/*"
               onChange={(e) => handleFiles(e.target.files)}
               className="hidden"
+              disabled={!productId}
             />
           </div>
 
-          {/* Bild-Vorschau */}
+          {/* Image Preview */}
           {images.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((image, index) => (
@@ -508,13 +851,13 @@ export default function ProductForm({
         </CardContent>
       </Card>
 
-      {/* Produkt-Details (Key-Value) */}
+      {/* Product Details (Key-Value) */}
       <Card>
         <CardHeader>
           <CardTitle>Produkt-Details</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {details.map((detail, index) => (
+          {isClient && details.map((detail, index) => (
             <div key={detail.id} className="flex gap-2">
               <div className="flex-1">
                 <Input
@@ -551,7 +894,7 @@ export default function ProductForm({
         </CardContent>
       </Card>
 
-      {/* Aktionen */}
+      {/* Actions */}
       <div className="flex justify-end gap-4">
         <Button
           type="button"

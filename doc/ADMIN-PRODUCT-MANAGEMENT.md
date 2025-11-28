@@ -6,19 +6,19 @@ Diese Dokumentation beschreibt die neu implementierte Admin-Produktverwaltung mi
 
 ### ✅ Backend API Routes
 
-#### **POST /api/products**
+#### **POST /api/admin/products**
 Erstellt ein neues Produkt mit allen Informationen
 
-#### **GET /api/products**
+#### **GET /api/admin/products**
 Lädt alle Produkte mit Pagination
 
-#### **GET /api/products/[id]**
+#### **GET /api/admin/products/[id]**
 Lädt ein einzelnes Produkt mit allen Details und Bildern
 
-#### **PUT /api/products/[id]**
+#### **PUT /api/admin/products/[id]**
 Aktualisiert ein bestehendes Produkt
 
-#### **DELETE /api/products/[id]**
+#### **DELETE /api/admin/products/[id]**
 Löscht ein Produkt
 
 #### **POST /api/upload**
@@ -72,8 +72,8 @@ Upload-Route für Produktbilder (max. 5MB, Formate: JPG, PNG, GIF, WebP)
 - `components/admin/ProductForm.tsx` - Hauptkomponente für Erstellen/Bearbeiten
 
 ### API Routes
-- `app/api/products/route.ts` - GET (alle) & POST (erstellen)
-- `app/api/products/[id]/route.ts` - GET (einzeln), PUT (aktualisieren), DELETE (löschen)
+- `app/api/admin/products/route.ts` - GET (alle) & POST (erstellen)
+- `app/api/admin/products/[id]/route.ts` - GET (einzeln), PUT (aktualisieren), DELETE (löschen)
 - `app/api/upload/route.ts` - Bildupload
 
 ### Pages
