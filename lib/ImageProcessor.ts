@@ -29,11 +29,10 @@ export class ImageProcessor {
   private productId?: number;
 
   /**
-   * @param basePath - Base output path (e.g., "public/productImages")
    * @param productId - Optional product ID for path structure
    */
-  constructor(basePath: string = "public/productImages", productId?: number) {
-    this.basePath = basePath;
+  constructor(productId?: number) {
+    this.basePath = process.env.BASE_PRODUCT_IMAGE_SYS_PATH ?? "public/productImages";
     this.productId = productId;
     this.files = [];
   }
@@ -255,11 +254,11 @@ export class ImageProcessor {
     // AVIF conversion
     await image
       .avif({
-        quality: options?.quality ?? 75,
+        quality: options?.quality ?? 65,
       })
       .toFile(fullPath);
 
-    return relativePath;
+    return `${process.env.BASE_PRODUCT_IMAGE_URL}${relativePath}`;
   }
 
   /**
@@ -302,6 +301,33 @@ export class ImageProcessor {
   }
 
   /**
+   * Deletes an image file by its URL path
+   *
+   * @param url - The relative URL path of the image (e.g., "/a/b/123/image.avif")
+   * @returns Promise that resolves when file is deleted
+   */
+  async deleteImageByUrl(url: string): Promise<void> {
+    try {
+      const fullPath = path.join(this.basePath, url);
+      await fs.unlink(fullPath);
+      console.log(`Deleted image: ${fullPath}`);
+    } catch (error) {
+      // File might not exist or already deleted, log but don't throw
+      console.warn(`Could not delete image at ${url}:`, error);
+    }
+  }
+
+  /**
+   * Deletes multiple images by their URL paths
+   *
+   * @param urls - Array of relative URL paths
+   * @returns Promise that resolves when all files are deleted
+   */
+  async deleteImagesByUrls(urls: string[]): Promise<void> {
+    await Promise.all(urls.map(url => this.deleteImageByUrl(url)));
+  }
+
+  /**
    * Creates multiple versions of an image in different formats
    *
    * @param file - The image to convert
@@ -338,4 +364,3 @@ export class ImageProcessor {
     return versions;
   }
 }
-

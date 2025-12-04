@@ -92,6 +92,10 @@ export default function ProductForm({
   const [dragActive, setDragActive] = useState(false);
   const [draggedImageIndex, setDraggedImageIndex] = useState<number | null>(null);
 
+  // Lightbox State
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState<number>(0);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Client-side initialization
@@ -131,6 +135,24 @@ export default function ProductForm({
 
     fetchData();
   }, []);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setLightboxOpen(false);
+      } else if (e.key === "ArrowLeft") {
+        setLightboxImageIndex(prev => Math.max(0, prev - 1));
+      } else if (e.key === "ArrowRight") {
+        setLightboxImageIndex(prev => Math.min(images.length - 1, prev + 1));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, images.length]);
 
   // Create new category
   const handleCreateCategory = async (name: string, rowId: string) => {
@@ -273,52 +295,56 @@ export default function ProductForm({
     }
 
     const data = await response.json();
-    return data.url;
+    return data.image.url;
   };
 
-  // Add files
+  // Add files - Upload sequentially to avoid unique key constraints
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    // Check if productId exists
     if (!productId) {
       setError("Bitte speichern Sie das Produkt zuerst, bevor Sie Bilder hochladen.");
       return;
     }
 
-    const newImages: ProductImage[] = [];
+    const fileArray = Array.from(files).filter(file => file.type.startsWith("image/"));
 
-    Array.from(files).forEach((file) => {
-      if (!file.type.startsWith("image/")) return;
+    if (fileArray.length === 0) return;
 
-      const newImage: ProductImage = {
-        url: URL.createObjectURL(file),
-        index: images.length + newImages.length,
-        file,
-        uploading: true,
-      };
-
-      newImages.push(newImage);
-
-      // Upload in background
-      uploadImage(file)
-        .then((url) => {
-          setImages((prev) =>
-            prev.map((img) =>
-              img.url === newImage.url
-                ? { ...img, url, uploading: false }
-                : img
-            )
-          );
-        })
-        .catch((err) => {
-          console.error("Upload error:", err);
-          setError(err.message || "Fehler beim Hochladen des Bildes");
-          setImages((prev) => prev.filter((img) => img.url !== newImage.url));
-        });
-    });
+    // Add all images with uploading state
+    const newImages: ProductImage[] = fileArray.map((file, idx) => ({
+      url: URL.createObjectURL(file),
+      index: images.length + idx,
+      file,
+      uploading: true,
+    }));
 
     setImages((prev) => [...prev, ...newImages]);
+
+    // Upload sequentially (one after another)
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      const tempUrl = newImages[i].url;
+
+      try {
+        const uploadedUrl = await uploadImage(file);
+
+        // Update the specific image with the real URL
+        setImages((prev) =>
+          prev.map((img) =>
+            img.url === tempUrl
+              ? { ...img, url: uploadedUrl, uploading: false }
+              : img
+          )
+        );
+      } catch (err) {
+        console.error("Upload error:", err);
+        setError(err instanceof Error ? err.message : "Fehler beim Hochladen des Bildes");
+
+        // Remove failed image
+        setImages((prev) => prev.filter((img) => img.url !== tempUrl));
+      }
+    }
   };
 
   // Drag & Drop Handler
@@ -370,7 +396,30 @@ export default function ProductForm({
   };
 
   // Remove image
-  const removeImage = (index: number) => {
+  const removeImage = async (index: number) => {
+    const imageToRemove = images[index];
+
+    // If image has an ID, delete from backend immediately
+    if (imageToRemove.id) {
+      try {
+        const response = await fetch(`/api/admin/product/image?imageId=${imageToRemove.id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          console.error("Failed to delete image:", error);
+          setError("Fehler beim Löschen des Bildes");
+          return;
+        }
+      } catch (err) {
+        console.error("Error deleting image:", err);
+        setError("Fehler beim Löschen des Bildes");
+        return;
+      }
+    }
+
+    // Remove from UI
     setImages((prev) => {
       const newImages = prev.filter((_, i) => i !== index);
       // Reassign indices
@@ -801,13 +850,21 @@ export default function ProductForm({
               {images.map((image, index) => (
                 <div
                   key={`${image.url}-${index}`}
-                  className="relative group border rounded-lg overflow-hidden bg-gray-50 cursor-move"
+                  className="relative group border rounded-lg overflow-hidden bg-gray-50"
                   draggable
                   onDragStart={() => handleImageDragStart(index)}
                   onDragOver={(e) => handleImageDragOver(e, index)}
                   onDragEnd={handleImageDragEnd}
                 >
-                  <div className="aspect-square relative">
+                  <div
+                    className="aspect-square relative cursor-pointer"
+                    onClick={() => {
+                      if (!image.uploading) {
+                        setLightboxImageIndex(index);
+                        setLightboxOpen(true);
+                      }
+                    }}
+                  >
                     <img
                       src={image.url}
                       alt={`Produkt ${index + 1}`}
@@ -836,7 +893,7 @@ export default function ProductForm({
                     </Button>
                   </div>
 
-                  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-move">
                     <GripVertical className="h-5 w-5 text-white drop-shadow" />
                   </div>
 
@@ -912,6 +969,147 @@ export default function ProductForm({
             : "Produkt erstellen"}
         </Button>
       </div>
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setLightboxOpen(false)}
+        >
+          {/* Close Button */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="absolute top-4 right-4 text-white hover:bg-white/20 hover:scale-110 h-10 w-10 rounded-full z-10 transition-all duration-200"
+            onClick={() => setLightboxOpen(false)}
+          >
+            <X className="h-6 w-6" />
+          </Button>
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm font-medium backdrop-blur-md animate-in slide-in-from-top duration-300">
+            {lightboxImageIndex + 1} / {images.length}
+          </div>
+
+          {/* Previous Button */}
+          {lightboxImageIndex > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 hover:scale-110 h-12 w-12 rounded-full transition-all duration-200 animate-in slide-in-from-left cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxImageIndex(prev => Math.max(0, prev - 1));
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+                className="w-8 h-8"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+            </Button>
+          )}
+
+          {/* Next Button */}
+          {lightboxImageIndex < images.length - 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 hover:scale-110 h-12 w-12 rounded-full transition-all duration-200 animate-in slide-in-from-right cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxImageIndex(prev => Math.min(images.length - 1, prev + 1));
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2.5}
+                stroke="currentColor"
+                className="w-8 h-8"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </Button>
+          )}
+
+          {/* Main Image Container */}
+          <div
+            className="relative max-w-[90vw] max-h-[85vh] flex items-center justify-center animate-in zoom-in-50 fade-in duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              key={lightboxImageIndex}
+              src={images[lightboxImageIndex]?.url}
+              alt={`Produkt Bild ${lightboxImageIndex + 1}`}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl transition-all duration-300"
+            />
+
+            {/* Image Info Bar */}
+            <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 bg-black/70 text-white px-6 py-3 rounded-full backdrop-blur-md shadow-lg animate-in slide-in-from-bottom duration-300">
+              <div className="flex items-center gap-4 text-sm">
+                <span className="font-medium">Bild #{lightboxImageIndex + 1}</span>
+                <span className="text-gray-300">•</span>
+                <span className="text-gray-300">Index: {images[lightboxImageIndex]?.index}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Thumbnail Strip */}
+          {images.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90vw] animate-in slide-in-from-bottom duration-500 delay-150">
+              <div className="flex gap-3 overflow-x-auto pb-2 px-4 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent hover:scrollbar-thumb-white/50">
+                {images.map((image, idx) => (
+                  <div
+                    key={`thumb-${idx}`}
+                    className={`relative cursor-pointer transition-all duration-300 rounded-lg overflow-hidden flex-shrink-0 ${
+                      idx === lightboxImageIndex
+                        ? 'ring-2 ring-white scale-110 shadow-lg'
+                        : 'opacity-60 hover:opacity-100 hover:scale-105'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxImageIndex(idx);
+                    }}
+                  >
+                    <div className="w-20 h-20 relative">
+                      <img
+                        src={image.url}
+                        alt={`Thumbnail ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {idx === lightboxImageIndex && (
+                      <div className="absolute inset-0 border-2 border-white rounded-lg pointer-events-none"></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Keyboard Navigation Hint */}
+          <div className="absolute bottom-6 right-6 bg-black/70 text-white px-4 py-2 rounded-lg text-xs backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-right duration-500 delay-300">
+            <div className="flex items-center gap-2">
+              <kbd className="px-2 py-1 bg-white/20 rounded text-xs">←</kbd>
+              <kbd className="px-2 py-1 bg-white/20 rounded text-xs">→</kbd>
+              <span className="text-gray-300">Navigation</span>
+              <span className="text-gray-400">•</span>
+              <kbd className="px-2 py-1 bg-white/20 rounded text-xs">ESC</kbd>
+              <span className="text-gray-300">Schließen</span>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

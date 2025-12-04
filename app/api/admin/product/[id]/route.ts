@@ -8,6 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { ImageProcessor } from "@/lib/ImageProcessor";
 
 export async function GET(
   request: Request,
@@ -75,9 +76,10 @@ export async function PUT(
     const body = await request.json();
     const { name, description, price, stock, categoryIds, brandId, previewImage, images, details } = body;
 
-    // Prüfen ob Produkt existiert
+    // Check if product exists and fetch current images
     const existingProduct = await db.product.findUnique({
       where: { id: productId },
+      include: { images: true },
     });
 
     if (!existingProduct) {
@@ -87,7 +89,14 @@ export async function PUT(
       );
     }
 
-    // Produkt aktualisieren
+    // If images are being updated, delete old images from filesystem
+    if (images) {
+      const processor = new ImageProcessor(productId);
+      const oldImageUrls = existingProduct.images.map(img => img.url);
+      await processor.deleteImagesByUrls(oldImageUrls);
+    }
+
+    // Update product
     const product = await db.product.update({
       where: { id: productId },
       data: {
@@ -165,9 +174,10 @@ export async function DELETE(
       );
     }
 
-    // Prüfen ob Produkt existiert
+    // Check if product exists and fetch images
     const existingProduct = await db.product.findUnique({
       where: { id: productId },
+      include: { images: true },
     });
 
     if (!existingProduct) {
@@ -177,7 +187,23 @@ export async function DELETE(
       );
     }
 
-    // Produkt löschen (Cascade löscht automatisch Bilder)
+    // Delete physical image files
+    const processor = new ImageProcessor(productId);
+    for (const image of existingProduct.images) {
+      await processor.deleteImageByUrl(image.url);
+    }
+
+    // Delete preview image if exists and different from product images
+    if (existingProduct.previewImage) {
+      const isPreviewInImages = existingProduct.images.some(
+        img => img.url === existingProduct.previewImage
+      );
+      if (!isPreviewInImages) {
+        await processor.deleteImageByUrl(existingProduct.previewImage);
+      }
+    }
+
+    // Delete product from database (cascade deletes image records)
     await db.product.delete({
       where: { id: productId },
     });

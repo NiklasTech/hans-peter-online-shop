@@ -55,10 +55,7 @@ export async function POST(request: Request) {
     const nextIndex = existingImages.length > 0 ? existingImages[0].index + 1 : 0;
 
     // Process image
-    const processor = new ImageProcessor(
-      "public/productImages",
-      parsedProductId
-    );
+    const processor = new ImageProcessor(parsedProductId);
 
     const url = await processor.saveAsAvif(
       file,
