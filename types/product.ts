@@ -31,7 +31,8 @@ export interface Product {
   updatedAt: Date;
   images?: ProductImage[];
   details?: ProductDetail[];
-  categories?: { categoryId: number }[];
+  categories?: { categoryId: number; category?: { name: string } }[];
+  brand?: { id: number; name: string };
 }
 
 export interface CreateProductInput {
