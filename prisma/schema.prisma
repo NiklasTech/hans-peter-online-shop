@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -64,6 +63,7 @@ model Product {
   price        Float
   previewImage String?
   stock        Int      @default(0)
+  sku          String?  @unique
   brandId      Int
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -173,7 +173,9 @@ model Review {
   userId    Int
   productId Int
   rating    Int      @default(5)
+  title     String?
   comment   String?
+  helpful   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
