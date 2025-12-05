@@ -586,13 +586,13 @@ export default function ProductForm({
           .map((d) => ({ key: d.key.trim(), value: d.value.trim() })),
       };
 
-      const url = "/api/admin/product";
+      const url = isEditing ? `/api/admin/product/${productId}` : "/api/admin/product";
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isEditing ? { id: productId, ...productData } : productData),
+        body: JSON.stringify(productData),
       });
 
       if (!response.ok) {
