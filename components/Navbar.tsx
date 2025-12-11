@@ -398,22 +398,34 @@ export default function Navbar() {
                       </DropdownMenuItem>
 
                       {/* Admin section */}
-                      {hasAdminSession && (
+                      {user?.isAdmin && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel className="text-yellow-600 dark:text-yellow-500 flex items-center gap-2">
                             <Shield className="h-4 w-4" />
                             Admin
                           </DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href="/admin"
-                              className="flex items-center gap-2 cursor-pointer"
-                            >
-                              <Settings className="h-4 w-4" />
-                              <span>Admin Panel</span>
-                            </Link>
-                          </DropdownMenuItem>
+                          {hasAdminSession ? (
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href="/admin"
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Settings className="h-4 w-4" />
+                                <span>Admin Panel</span>
+                              </Link>
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href="/admin/login"
+                                className="flex items-center gap-2 cursor-pointer"
+                              >
+                                <Shield className="h-4 w-4" />
+                                <span>Admin Login</span>
+                              </Link>
+                            </DropdownMenuItem>
+                          )}
                         </>
                       )}
 
