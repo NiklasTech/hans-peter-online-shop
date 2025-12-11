@@ -9,6 +9,8 @@ WORKDIR /app
 # Kopiere package.json und package-lock.json
 COPY package*.json ./
 RUN npm ci
+RUN npm install lucide-react tailwind-merge class-variance-authority tw-animate-css
+
 
 # Build-Stage
 FROM base AS builder
