@@ -3,22 +3,24 @@ FROM node:20-alpine AS base
 
 # Installiere Abhängigkeiten nur wenn nötig
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat git
 WORKDIR /app
 
 # Kopiere package.json und package-lock.json
 COPY package*.json ./
-RUN npm ci
-RUN npm install lucide-react tailwind-merge class-variance-authority tw-animate-css
-
+RUN npm install
 
 # Build-Stage
 FROM base AS builder
+RUN apk add --no-cache git libc6-compat openssl
+
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Generiere Prisma Client
+ARG DATABASE_URL="postgresql://postgres:postgres@localhost:5432/HansPeter?schema=public"
+ENV DATABASE_URL=${DATABASE_URL}
 RUN npx prisma generate
 
 # Build Next.js App
@@ -27,6 +29,7 @@ RUN npm run build
 
 # Production-Stage
 FROM base AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -36,15 +39,14 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Kopiere notwendige Dateien
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
 # Setze Berechtigungen
 RUN mkdir -p /app/public/productImages
-RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 
@@ -54,4 +56,3 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 CMD ["node", "server.js"]
-
