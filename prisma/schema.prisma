@@ -31,6 +31,7 @@ model User {
   chats          SupportChat[]
   messages       ChatMessage[]
   addresses      Address[]
+  adminSessions  AdminSession[]
   defaultAddress Address?      @relation("DefaultAddress", fields: [defaultAddressId], references: [id], onDelete: SetNull)
 }
 
@@ -247,4 +248,17 @@ model Address {
   defaultForUser User? @relation("DefaultAddress")
 
   @@index([userId])
+}
+
+model AdminSession {
+  id        String   @id @default(cuid())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
 }

@@ -1,9 +1,38 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
+import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({
+  adapter,
+});
 
 async function main() {
   console.log('Starting seed...');
+
+  // Create default admin user
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@hanspeter.shop' },
+    update: {},
+    create: {
+      name: 'Admin Hans Peter',
+      email: 'admin@hanspeter.shop',
+      password: adminPassword,
+      isAdmin: true,
+    },
+  });
+
+  console.log('Created admin user:', admin.email);
+  console.log('  - Default password: admin123');
+  console.log('  - IMPORTANT: Change this password in production!');
 
   // Create a brand
   const brand = await prisma.brand.upsert({
@@ -38,7 +67,6 @@ async function main() {
       description: 'High-precision wireless gaming mouse with RGB lighting and customizable buttons. Features a 16000 DPI sensor, ergonomic design, and up to 70 hours of battery life.',
       price: 79.99,
       stock: 50,
-      sku: 'WGM-PRO-001',
       brandId: brand.id,
       previewImage: '/images/products/gaming-mouse-1.jpg',
       categories: {
