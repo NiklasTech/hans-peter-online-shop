@@ -18,9 +18,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generiere Prisma Client
-ARG DATABASE_URL="postgresql://postgres:postgres@localhost:5432/HansPeter?schema=public"
-ENV DATABASE_URL=${DATABASE_URL}
+# Generiere Prisma Client (DATABASE_URL wird als Build-Argument übergeben)
+ARG DATABASE_URL
 RUN npx prisma generate
 
 # Build Next.js App
