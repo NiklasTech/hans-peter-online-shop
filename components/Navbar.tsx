@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuLabel,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,16 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import { Search, ShoppingCart, Menu, X } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  Menu,
+  X,
+  ShoppingBag,
+  Heart,
+  User,
+  Settings,
+} from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -69,7 +78,13 @@ const categories = [
 export default function Navbar() {
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window !== "undefined") {
+      const storedLoginState = sessionStorage.getItem("isLoggedIn");
+      return storedLoginState === "true";
+    }
+    return false;
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -80,8 +95,15 @@ export default function Navbar() {
     }
   };
 
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    sessionStorage.setItem("isLoggedIn", "true");
+    setIsAuthDialogOpen(false);
+  };
+
   const handleLogout = () => {
     setIsLoggedIn(false);
+    sessionStorage.removeItem("isLoggedIn");
   };
 
   return (
@@ -146,8 +168,18 @@ export default function Navbar() {
               </div>
             </div>
 
-            {/* Cart and Avatar */}
+            {/* Cart, Wishlist and Avatar */}
             <div className="flex items-center gap-4">
+              {/* Wishlist Icon */}
+              <Link href="/wishlist">
+                <div className="relative cursor-pointer hover:opacity-80 transition">
+                  <Heart className="h-6 w-6 text-gray-900 dark:text-white" />
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    0
+                  </span>
+                </div>
+              </Link>
+
               {/* Shopping Cart with Popover */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -189,9 +221,7 @@ export default function Navbar() {
                         </Button>
                       </Link>
                       <Link href="/checkout" className="block">
-                        <Button className="w-full">
-                          Zur Kasse
-                        </Button>
+                        <Button className="w-full">Zur Kasse</Button>
                       </Link>
                     </div>
                   </div>
@@ -199,34 +229,71 @@ export default function Navbar() {
               </Popover>
 
               {/* Avatar / Auth */}
-              {isLoggedIn ? (
-                <ContextMenu>
-                  <ContextMenuTrigger asChild>
-                    <Avatar className="cursor-pointer hover:opacity-80 transition">
-                      <AvatarImage src="https://github.com/shadcn.png" />
-                      <AvatarFallback>US</AvatarFallback>
-                    </Avatar>
-                  </ContextMenuTrigger>
-                  <ContextMenuContent>
-                    <ContextMenuLabel>Mein Konto</ContextMenuLabel>
-                    <ContextMenuSeparator />
-                    <ContextMenuItem>Profil</ContextMenuItem>
-                    <ContextMenuItem>Einstellungen</ContextMenuItem>
-                    <ContextMenuItem>Bestellungen</ContextMenuItem>
-                    <ContextMenuSeparator />
-                    <ContextMenuItem onClick={handleLogout}>
-                      Abmelden
-                    </ContextMenuItem>
-                  </ContextMenuContent>
-                </ContextMenu>
-              ) : (
-                <Avatar
-                  className="cursor-pointer hover:opacity-80 transition"
-                  onClick={handleAvatarClick}
-                >
-                  <AvatarFallback>AG</AvatarFallback>
-                </Avatar>
-              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="cursor-pointer hover:opacity-80 transition">
+                    {isLoggedIn ? (
+                      <>
+                        <AvatarImage src="https://github.com/shadcn.png" />
+                        <AvatarFallback>US</AvatarFallback>
+                      </>
+                    ) : (
+                      <AvatarFallback>AG</AvatarFallback>
+                    )}
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {isLoggedIn ? (
+                    <>
+                      <DropdownMenuLabel>Mein Konto</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/profile"
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <User className="h-4 w-4" />
+                          <span>Mein Profil</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/orders"
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <ShoppingBag className="h-4 w-4" />
+                          <span>Meine Bestellungen</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href="/settings"
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span>Einstellungen</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="cursor-pointer"
+                      >
+                        Abmelden
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem
+                        onClick={handleAvatarClick}
+                        className="cursor-pointer"
+                      >
+                        Login / Registrieren
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -235,7 +302,7 @@ export default function Navbar() {
       {/* Mobile Menu - Accordion Style */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white dark:bg-slate-950 border-b border-gray-200 dark:border-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             {selectedCategory ? (
               <>
                 {/* Back Button */}
@@ -285,7 +352,7 @@ export default function Navbar() {
                 </div>
               </>
             )}
-            </div>
+          </div>
         </div>
       )}
 
@@ -325,13 +392,7 @@ export default function Navbar() {
                 <label className="text-sm font-medium">Passwort</label>
                 <Input type="password" placeholder="••••••••" />
               </div>
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setIsLoggedIn(true);
-                  setIsAuthDialogOpen(false);
-                }}
-              >
+              <Button className="w-full" onClick={handleLogin}>
                 Anmelden
               </Button>
             </TabsContent>
@@ -358,13 +419,7 @@ export default function Navbar() {
                 </label>
                 <Input type="password" placeholder="••••••••" />
               </div>
-              <Button
-                className="w-full"
-                onClick={() => {
-                  setIsLoggedIn(true);
-                  setIsAuthDialogOpen(false);
-                }}
-              >
+              <Button className="w-full" onClick={handleLogin}>
                 Registrieren
               </Button>
             </TabsContent>
