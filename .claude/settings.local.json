@@ -12,7 +12,9 @@
       "Bash(npx prisma generate:*)",
       "Bash(npm run db:seed:*)",
       "Bash(npm install:*)",
-      "Bash(export PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"npx primsa migrate reset --force\")"
+      "Bash(export PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"npx primsa migrate reset --force\")",
+      "Bash(git rm:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
