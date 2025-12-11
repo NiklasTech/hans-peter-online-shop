@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -78,15 +78,18 @@ const categories = [
 export default function Navbar() {
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window !== "undefined") {
-      const storedLoginState = sessionStorage.getItem("isLoggedIn");
-      return storedLoginState === "true";
-    }
-    return false;
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Check login state on mount (client-side only)
+  useEffect(() => {
+    const storedLoginState = sessionStorage.getItem("isLoggedIn");
+    if (storedLoginState === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleAvatarClick = () => {
     if (!isLoggedIn) {
