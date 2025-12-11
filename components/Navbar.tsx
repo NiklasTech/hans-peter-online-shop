@@ -38,6 +38,7 @@ import {
   Heart,
   User,
   Settings,
+  Shield,
 } from "lucide-react";
 import {
   Popover,
@@ -75,38 +76,143 @@ const categories = [
   },
 ];
 
+interface UserData {
+  id: number;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+}
+
 export default function Navbar() {
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<UserData | null>(null);
+  const [hasAdminSession, setHasAdminSession] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Check login state on mount (client-side only)
+  // Form states
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [registerName, setRegisterName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+
+  // Check authentication status on mount
   useEffect(() => {
-    const storedLoginState = sessionStorage.getItem("isLoggedIn");
-    if (storedLoginState === "true") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoggedIn(true);
-    }
+    checkAuthStatus();
   }, []);
 
-  const handleAvatarClick = () => {
-    if (!isLoggedIn) {
-      setIsAuthDialogOpen(true);
-      setAuthMode("login");
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        setHasAdminSession(data.hasAdminSession);
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
     }
   };
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-    sessionStorage.setItem("isLoggedIn", "true");
-    setIsAuthDialogOpen(false);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: loginEmail,
+          password: loginPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Login fehlgeschlagen");
+        return;
+      }
+
+      setUser(data.user);
+      setIsAuthDialogOpen(false);
+      setLoginEmail("");
+      setLoginPassword("");
+      await checkAuthStatus();
+    } catch {
+      setError("Ein Fehler ist aufgetreten");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    sessionStorage.removeItem("isLoggedIn");
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (registerPassword !== registerConfirmPassword) {
+      setError("Passwörter stimmen nicht überein");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: registerName,
+          email: registerEmail,
+          password: registerPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Registrierung fehlgeschlagen");
+        return;
+      }
+
+      setUser(data.user);
+      setIsAuthDialogOpen(false);
+      setRegisterName("");
+      setRegisterEmail("");
+      setRegisterPassword("");
+      setRegisterConfirmPassword("");
+      await checkAuthStatus();
+    } catch {
+      setError("Ein Fehler ist aufgetreten");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+      await checkAuthStatus();
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
+  const getUserInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -234,21 +340,34 @@ export default function Navbar() {
               {/* Avatar / Auth */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Avatar className="cursor-pointer hover:opacity-80 transition">
-                    {isLoggedIn ? (
-                      <>
-                        <AvatarImage src="https://github.com/shadcn.png" />
-                        <AvatarFallback>US</AvatarFallback>
-                      </>
-                    ) : (
-                      <AvatarFallback>AG</AvatarFallback>
+                  <div className="relative cursor-pointer">
+                    <Avatar className="hover:opacity-80 transition">
+                      {user ? (
+                        <>
+                          <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
+                          <AvatarFallback>{getUserInitials(user.name)}</AvatarFallback>
+                        </>
+                      ) : (
+                        <AvatarFallback>AG</AvatarFallback>
+                      )}
+                    </Avatar>
+                    {/* Admin badge indicator */}
+                    {hasAdminSession && (
+                      <div className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full p-1">
+                        <Shield className="h-3 w-3 text-white" />
+                      </div>
                     )}
-                  </Avatar>
+                  </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  {isLoggedIn ? (
+                  {user ? (
                     <>
-                      <DropdownMenuLabel>Mein Konto</DropdownMenuLabel>
+                      <DropdownMenuLabel>
+                        <div>
+                          <p className="font-medium">{user.name}</p>
+                          <p className="text-xs text-gray-500">{user.email}</p>
+                        </div>
+                      </DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
                         <Link
@@ -277,18 +396,42 @@ export default function Navbar() {
                           <span>Einstellungen</span>
                         </Link>
                       </DropdownMenuItem>
+
+                      {/* Admin section */}
+                      {hasAdminSession && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuLabel className="text-yellow-600 dark:text-yellow-500 flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            Admin
+                          </DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link
+                              href="/admin"
+                              className="flex items-center gap-2 cursor-pointer"
+                            >
+                              <Settings className="h-4 w-4" />
+                              <span>Admin Panel</span>
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={handleLogout}
-                        className="cursor-pointer"
+                        className="cursor-pointer text-red-600 dark:text-red-500"
                       >
-                        Abmelden
+                        Abmelden (User)
                       </DropdownMenuItem>
                     </>
                   ) : (
                     <>
                       <DropdownMenuItem
-                        onClick={handleAvatarClick}
+                        onClick={() => {
+                          setIsAuthDialogOpen(true);
+                          setAuthMode("login");
+                        }}
                         className="cursor-pointer"
                       >
                         Login / Registrieren
@@ -375,9 +518,10 @@ export default function Navbar() {
 
           <Tabs
             value={authMode}
-            onValueChange={(value) =>
-              setAuthMode(value as "login" | "register")
-            }
+            onValueChange={(value) => {
+              setAuthMode(value as "login" | "register");
+              setError("");
+            }}
             className="w-full"
           >
             <TabsList className="grid w-full grid-cols-2">
@@ -385,46 +529,95 @@ export default function Navbar() {
               <TabsTrigger value="register">Registrieren</TabsTrigger>
             </TabsList>
 
+            {/* Error message */}
+            {error && (
+              <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
+
             {/* Login Tab */}
             <TabsContent value="login" className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">E-Mail</label>
-                <Input type="email" placeholder="deine@email.com" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Passwort</label>
-                <Input type="password" placeholder="••••••••" />
-              </div>
-              <Button className="w-full" onClick={handleLogin}>
-                Anmelden
-              </Button>
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">E-Mail</label>
+                  <Input
+                    type="email"
+                    placeholder="deine@email.com"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Passwort</label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Wird angemeldet..." : "Anmelden"}
+                </Button>
+              </form>
             </TabsContent>
 
             {/* Register Tab */}
             <TabsContent value="register" className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Vollständiger Name
-                </label>
-                <Input type="text" placeholder="Max Mustermann" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">E-Mail</label>
-                <Input type="email" placeholder="deine@email.com" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Passwort</label>
-                <Input type="password" placeholder="••••••••" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  Passwort bestätigen
-                </label>
-                <Input type="password" placeholder="••••••••" />
-              </div>
-              <Button className="w-full" onClick={handleLogin}>
-                Registrieren
-              </Button>
+              <form onSubmit={handleRegister} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Vollständiger Name
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Max Mustermann"
+                    value={registerName}
+                    onChange={(e) => setRegisterName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">E-Mail</label>
+                  <Input
+                    type="email"
+                    placeholder="deine@email.com"
+                    value={registerEmail}
+                    onChange={(e) => setRegisterEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Passwort</label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={registerPassword}
+                    onChange={(e) => setRegisterPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Passwort bestätigen
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={registerConfirmPassword}
+                    onChange={(e) => setRegisterConfirmPassword(e.target.value)}
+                    required
+                    minLength={8}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Wird registriert..." : "Registrieren"}
+                </Button>
+              </form>
             </TabsContent>
           </Tabs>
         </DialogContent>
