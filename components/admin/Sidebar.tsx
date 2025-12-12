@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import {
   Grid3X3,
   LogOut,
@@ -28,9 +28,32 @@ const adminLinks = [
   { name: "Benutzer", href: "/admin/users", icon: Users },
 ];
 
+function useLocalStorageState(key: string, defaultValue: boolean) {
+  const getSnapshot = () => {
+    const saved = localStorage.getItem(key);
+    return saved === "true";
+  };
+
+  const getServerSnapshot = () => defaultValue;
+
+  const subscribe = (callback: () => void) => {
+    window.addEventListener("storage", callback);
+    return () => window.removeEventListener("storage", callback);
+  };
+
+  const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const setValue = (newValue: boolean) => {
+    localStorage.setItem(key, String(newValue));
+    window.dispatchEvent(new Event("storage"));
+  };
+
+  return [value, setValue] as const;
+}
+
 export default function Sidebar({ isAdmin = false }: SidebarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useLocalStorageState("admin-sidebar-open", false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleAdminLogout = async () => {
@@ -44,6 +67,11 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
   };
 
   const isLinkActive = (href: string) => {
+    // Exakte Übereinstimmung für /admin (Dashboard)
+    if (href === "/admin") {
+      return pathname === "/admin";
+    }
+    // Für andere Links: exakt oder Unterseiten
     return pathname === href || pathname.startsWith(href + "/");
   };
 

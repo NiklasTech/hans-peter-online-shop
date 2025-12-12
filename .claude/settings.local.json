@@ -14,7 +14,8 @@
       "Bash(npm install:*)",
       "Bash(export PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"npx primsa migrate reset --force\")",
       "Bash(git rm:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(npx tsc --noEmit --skipLibCheck)"
     ],
     "deny": [],
     "ask": []
