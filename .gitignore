@@ -48,3 +48,11 @@ postgres_data
 /public/productImages
 
 package-lock.json
+
+# Docker (aber nicht Dockerfile und docker-compose.yaml!)
+# Diese Dateien MÜSSEN committed werden für Portainer Git-Integration
+.docker/
+docker-volumes/
+
+# Lokale Produktbilder nicht committen
+productImages/

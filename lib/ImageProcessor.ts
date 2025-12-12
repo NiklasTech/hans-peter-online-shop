@@ -23,6 +23,11 @@ export interface TransparencyOptions {
   preserveTransparency?: boolean;
 }
 
+export interface SavedImage {
+  url: string;
+  previewUrl: string;
+}
+
 export class ImageProcessor {
   private readonly files: File[];
   private readonly basePath: string;
@@ -52,16 +57,16 @@ export class ImageProcessor {
   }
 
   /**
-   * Generates path according to schema: /[a-f]/[a-f]/[productId]/filename.extension
+   * Generates path according to schema: /ff/ff/ff/
    */
-  private generatePath(filename: string, extension: string): string {
-    const hash = crypto.createHash("md5").update(filename).digest("hex");
-    const firstChar = hash[0];
-    const secondChar = hash[1];
+  private generatePath(buffer: Buffer<ArrayBufferLike>): string {
+    const hash = crypto.createHash("md5").update(buffer).digest("hex");
+    const firstChar = hash.slice(0, 2);
+    const secondChar = hash.slice(2, 4);
+    const thirdChar = hash.slice(4, 6);
 
-    const productIdPart = this.productId ? `/${this.productId}` : "";
 
-    return `/${firstChar}/${secondChar}${productIdPart}/${filename}.${extension}`;
+    return `/${firstChar}/${secondChar}/${thirdChar}/`;
   }
 
   /**
@@ -220,19 +225,22 @@ export class ImageProcessor {
    * Saves an image as AVIF
    *
    * @param file - The image to convert
+   * @param imageType
    * @param dimensions - Maximum dimensions (optional)
    * @param options - Quality and transparency options (optional, default quality: 75)
    * @returns Path of the saved image (relative to basePath)
    */
-  async saveAsAvif(
+  protected async saveImage(
     file: File,
+    imageType:  "avif" | "jpeg" | "jpg" | "png" | "webp",
     dimensions?: ImageDimensions,
     options?: ImageQuality & TransparencyOptions
   ): Promise<string> {
     const buffer = await this.fileToBuffer(file);
     const filename = path.parse(file.name).name;
-    const relativePath = this.generatePath(filename, "avif");
+    const relativePath = path.join(this.generatePath(buffer), `${filename}.${imageType}`);
     const fullPath = path.join(this.basePath, relativePath);
+    const previewPath = path.join(this.basePath, relativePath.replace(`.${imageType}`, `_preview.${imageType}`));
 
     await this.ensureDirectory(fullPath);
 
@@ -245,6 +253,11 @@ export class ImageProcessor {
         withoutEnlargement: true,
       });
     }
+    
+    const previewImage = image.resize(400, 400, {
+      fit: "inside",
+      withoutEnlargement: true,
+    })
 
     // Transparency handling
     if (options?.preserveTransparency === false) {
@@ -252,13 +265,126 @@ export class ImageProcessor {
     }
 
     // AVIF conversion
-    await image
+    switch (imageType) {
+      case "avif":
+        await image.avif({quality: options?.quality ?? 60,}).toFile(fullPath);
+        await previewImage.avif({quality: options?.quality ?? 50,}).toFile(previewPath);
+        break;
+      case "jpeg":
+      case "jpg":
+        await image.jpeg({quality: options?.quality ?? 70,}).toFile(fullPath);
+        await previewImage.jpeg({quality: options?.quality ?? 60,}).toFile(previewPath);
+        break;
+      case "webp":
+        await image.webp({quality: options?.quality ?? 65,}).toFile(fullPath);
+        await previewImage.webp({quality: options?.quality ?? 55,}).toFile(previewPath);
+        break;
+      case "png":
+        await image.png({compressionLevel: 7,}).toFile(fullPath);
+        await previewImage.png({compressionLevel: 7,}).toFile(previewPath);
+        break;
+    }
+
+    return `${process.env.BASE_PRODUCT_IMAGE_URL}${relativePath}`;
+  }
+
+  /**
+   * Helper method to generate preview path and hash
+   */
+  private generatePreviewPath(productId: number, imageIndex?: number): { relativePath: string; fullPath: string } {
+    const filename = imageIndex !== undefined ? `${productId}_${imageIndex}_preview` : `${productId}_preview`;
+    const hash = crypto.createHash("md5").update(filename).digest("hex");
+    const firstChar = hash[0];
+    const secondChar = hash[1];
+
+    const relativePath = `/${firstChar}/${secondChar}/${productId}/${filename}.avif`;
+    const fullPath = path.join(this.basePath, relativePath);
+
+    return { relativePath, fullPath };
+  }
+
+  /**
+   * Creates a low-resolution preview image from the first product image
+   *
+   * @param file - The image to convert
+   * @param productId - The product ID for naming
+   * @returns URL of the saved preview image
+   */
+  async createPreviewImage(file: File, productId: number): Promise<string> {
+    const buffer = await this.fileToBuffer(file);
+    const { relativePath, fullPath } = this.generatePreviewPath(productId);
+
+    await this.ensureDirectory(fullPath);
+
+    await sharp(buffer)
+      .resize(400, 400, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
       .avif({
-        quality: options?.quality ?? 65,
+        quality: 60,
       })
       .toFile(fullPath);
 
     return `${process.env.BASE_PRODUCT_IMAGE_URL}${relativePath}`;
+  }
+
+  /**
+   * Creates a preview for a specific product image
+   *
+   * @param file - The image to convert
+   * @param productId - The product ID
+   * @param imageIndex - The index of the image
+   * @returns URL of the saved image preview
+   */
+  async createImagePreview(file: File, productId: number, imageIndex: number): Promise<string> {
+    const buffer = await this.fileToBuffer(file);
+    const { relativePath, fullPath } = this.generatePreviewPath(productId, imageIndex);
+
+    await this.ensureDirectory(fullPath);
+
+    await sharp(buffer)
+      .resize(400, 400, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .avif({
+        quality: 55,
+      })
+      .toFile(fullPath);
+
+    return `${process.env.BASE_PRODUCT_IMAGE_URL}${relativePath}`;
+  }
+
+  /**
+   * Deletes the preview image for a product if it exists
+   *
+   * @param productId - The product ID
+   */
+  async deletePreviewImage(productId: number): Promise<void> {
+    const { fullPath } = this.generatePreviewPath(productId);
+
+    try {
+      await fs.unlink(fullPath);
+    } catch (error) {
+      console.log(`Preview image not found or couldn't be deleted: ${fullPath}`);
+    }
+  }
+
+  /**
+   * Deletes a specific image preview
+   *
+   * @param productId - The product ID
+   * @param imageIndex - The index of the image
+   */
+  async deleteImagePreview(productId: number, imageIndex: number): Promise<void> {
+    const { fullPath } = this.generatePreviewPath(productId, imageIndex);
+
+    try {
+      await fs.unlink(fullPath);
+    } catch (error) {
+      console.log(`Image preview not found or couldn't be deleted: ${fullPath}`);
+    }
   }
 
   /**

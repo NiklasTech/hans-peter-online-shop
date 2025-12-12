@@ -92,7 +92,7 @@ export async function PUT(
     // If images are being updated, delete old images from filesystem
     if (images) {
       const processor = new ImageProcessor(productId);
-      const oldImageUrls = existingProduct.images.map(img => img.url);
+      const oldImageUrls = existingProduct.images.map((img: { url: string }) => img.url);
       await processor.deleteImagesByUrls(oldImageUrls);
     }
 
@@ -196,7 +196,7 @@ export async function DELETE(
     // Delete preview image if exists and different from product images
     if (existingProduct.previewImage) {
       const isPreviewInImages = existingProduct.images.some(
-        img => img.url === existingProduct.previewImage
+        (img: { url: string }) => img.url === existingProduct.previewImage
       );
       if (!isPreviewInImages) {
         await processor.deleteImageByUrl(existingProduct.previewImage);

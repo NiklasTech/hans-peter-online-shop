@@ -75,7 +75,6 @@ export default function ProductForm({
   const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([]);
   const [brandName, setBrandName] = useState("");
   const [brandId, setBrandId] = useState<number | null>(null);
-  const [previewImage, setPreviewImage] = useState("");
   const [images, setImages] = useState<ProductImage[]>([]);
   const [details, setDetails] = useState<DetailRow[]>([]);
   const [isClient, setIsClient] = useState(false);
@@ -238,7 +237,6 @@ export default function ProductForm({
         setBrandName(brand.name);
       }
 
-      setPreviewImage(product.previewImage || "");
 
       if (product.images) {
         setImages(
@@ -391,7 +389,26 @@ export default function ProductForm({
     setDraggedImageIndex(index);
   };
 
-  const handleImageDragEnd = () => {
+  const handleImageDragEnd = async () => {
+    if (draggedImageIndex === null) return;
+
+    // Check if the first image changed (position 0)
+    const firstImage = images[0];
+    if (firstImage && productId) {
+      // Update preview image on backend
+      try {
+        await fetch("/api/admin/product/updatePreview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId,
+          }),
+        });
+      } catch (err) {
+        console.error("Error updating preview image:", err);
+      }
+    }
+
     setDraggedImageIndex(null);
   };
 
@@ -423,7 +440,20 @@ export default function ProductForm({
     setImages((prev) => {
       const newImages = prev.filter((_, i) => i !== index);
       // Reassign indices
-      return newImages.map((img, idx) => ({ ...img, index: idx }));
+      const updatedImages = newImages.map((img, idx) => ({ ...img, index: idx }));
+
+      // If we removed the first image and there are still images left, update preview
+      if (index === 0 && updatedImages.length > 0 && productId) {
+        fetch("/api/admin/product/updatePreview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productId,
+          }),
+        }).catch(err => console.error("Error updating preview image:", err));
+      }
+
+      return updatedImages;
     });
   };
 
@@ -576,7 +606,6 @@ export default function ProductForm({
         stock: parseInt(stock),
         categoryIds: validCategories.map((row) => row.categoryId!),
         brandId: brandId,
-        previewImage: previewImage.trim() || images[0]?.url || null,
         images: images.map((img) => ({
           url: img.url,
           index: img.index,
@@ -778,16 +807,6 @@ export default function ProductForm({
                 </div>
               ))}
             </div>
-          </div>
-
-          <div>
-            <Label htmlFor="previewImage" className="m-1">Vorschaubild URL (optional)</Label>
-            <Input
-              id="previewImage"
-              value={previewImage}
-              onChange={(e) => setPreviewImage(e.target.value)}
-              placeholder="Wird automatisch das erste Bild verwendet"
-            />
           </div>
         </CardContent>
       </Card>

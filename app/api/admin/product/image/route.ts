@@ -41,14 +41,42 @@ export async function DELETE(request: Request) {
       );
     }
 
-    // Delete physical file
+    // Delete physical file and its preview
     const processor = new ImageProcessor(image.productId);
     await processor.deleteImageByUrl(image.url);
+    await processor.deleteImagePreview(image.productId, image.index);
+
+    // If this was the first image, check if there's a new first image to update product preview
+    const wasFirstImage = image.index === 0;
 
     // Delete from database
     await db.productImage.delete({
       where: { id: parsedImageId },
     });
+
+    // If deleted image was the first one, update product preview with new first image
+    if (wasFirstImage) {
+      const newFirstImage = await db.productImage.findFirst({
+        where: { productId: image.productId },
+        orderBy: { index: "asc" },
+      });
+
+      if (newFirstImage) {
+        // Update product preview to point to the new first image's preview
+        await db.product.update({
+          where: { id: image.productId },
+          data: { previewImage: newFirstImage.previewUrl },
+        });
+      } else {
+        // No images left, clear product preview
+        await db.product.update({
+          where: { id: image.productId },
+          data: { previewImage: null },
+        });
+        // Delete product preview image
+        await processor.deletePreviewImage(image.productId);
+      }
+    }
 
     return NextResponse.json({
       message: "Image deleted successfully",

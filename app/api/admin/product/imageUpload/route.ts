@@ -63,16 +63,35 @@ export async function POST(request: Request) {
       { quality: 75, preserveTransparency: true }
     );
 
-    // Save to database
+    // Create preview for this image
+    const imagePreviewUrl = await processor.createImagePreview(file, parsedProductId, nextIndex);
+
+    // If this is the first image (index 0), also create product preview image
+    let productPreviewUrl: string | null = null;
+    if (nextIndex === 0) {
+      productPreviewUrl = await processor.createPreviewImage(file, parsedProductId);
+
+      // Update product with preview image
+      await db.product.update({
+        where: { id: parsedProductId },
+        data: { previewImage: productPreviewUrl },
+      });
+    }
+
+    // Save to database with preview URL
     const image = await db.productImage.create({
       data: {
         productId: parsedProductId,
         url,
+        previewUrl: imagePreviewUrl,
         index: nextIndex,
       },
     });
 
-    return NextResponse.json({ image }, { status: 201 });
+    return NextResponse.json({
+      image,
+      productPreviewImage: productPreviewUrl
+    }, { status: 201 });
   } catch (error) {
     console.error("Error uploading file:", error);
     return NextResponse.json(

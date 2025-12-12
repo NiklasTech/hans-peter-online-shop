@@ -32,7 +32,7 @@ model User {
   messages       ChatMessage[]
   addresses      Address[]
   adminSessions  AdminSession[]
-  defaultAddress Address?      @relation("DefaultAddress", fields: [defaultAddressId], references: [id], onDelete: SetNull)
+  defaultAddress Address?       @relation("DefaultAddress", fields: [defaultAddressId], references: [id], onDelete: SetNull)
 }
 
 model Category {
@@ -218,11 +218,12 @@ model ChatMessage {
 }
 
 model ProductImage {
-  id        Int      @id @default(autoincrement())
-  productId Int
-  index     Int      @default(0)
-  url       String
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  index      Int      @default(0)
+  url        String
+  previewUrl String?
+  createdAt  DateTime @default(now())
 
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
