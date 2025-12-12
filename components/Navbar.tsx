@@ -93,6 +93,7 @@ export default function Navbar() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
@@ -111,6 +112,40 @@ export default function Navbar() {
   // Check authentication status on mount
   useEffect(() => {
     checkAuthStatus();
+  }, []);
+
+  // Fetch wishlist count
+  const fetchWishlistCount = async () => {
+    try {
+      const response = await fetch("/api/wishlist/count");
+      if (response.ok) {
+        const data = await response.json();
+        setWishlistCount(data.count);
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist count:", error);
+    }
+  };
+
+  // Fetch wishlist count on mount and when user changes
+  useEffect(() => {
+    if (user) {
+      fetchWishlistCount();
+    } else {
+      setWishlistCount(0);
+    }
+  }, [user]);
+
+  // Listen for wishlist updates
+  useEffect(() => {
+    const handleWishlistUpdate = () => {
+      fetchWishlistCount();
+    };
+
+    window.addEventListener("wishlist-updated", handleWishlistUpdate);
+    return () => {
+      window.removeEventListener("wishlist-updated", handleWishlistUpdate);
+    };
   }, []);
 
   const checkAuthStatus = async () => {
@@ -329,9 +364,11 @@ export default function Navbar() {
               <Link href="/wishlist">
                 <div className="relative cursor-pointer hover:opacity-80 transition">
                   <Heart className="h-6 w-6 text-gray-900 dark:text-white" />
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                    0
-                  </span>
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                      {wishlistCount > 99 ? "99+" : wishlistCount}
+                    </span>
+                  )}
                 </div>
               </Link>
 

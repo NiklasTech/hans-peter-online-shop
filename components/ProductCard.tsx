@@ -2,6 +2,7 @@
 
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import WishlistButton from "@/components/WishlistButton";
 
 interface ProductCardProps {
   id?: string;
@@ -33,6 +34,11 @@ export default function ProductCard({
             <p className="text-sm font-medium">Produktbild</p>
           </div>
         )}
+
+        {/* Wishlist Button - appears on hover */}
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <WishlistButton productId={Number(id)} size="sm" />
+        </div>
 
         {/* Add to Cart Button - appears on hover */}
         <button className="absolute bottom-4 right-4 bg-white dark:bg-slate-900 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">

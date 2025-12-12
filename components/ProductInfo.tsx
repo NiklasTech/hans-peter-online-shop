@@ -1,10 +1,12 @@
 "use client";
 
-import { Heart, ShoppingCart, Share2 } from "lucide-react";
+import { ShoppingCart, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import WishlistButton from "@/components/WishlistButton";
 
 interface ProductInfoProps {
+  productId: number;
   name: string;
   price: number;
   rating: number;
@@ -16,6 +18,7 @@ interface ProductInfoProps {
 }
 
 export default function ProductInfo({
+  productId,
   name,
   price,
   rating,
@@ -26,7 +29,6 @@ export default function ProductInfo({
   category,
 }: ProductInfoProps) {
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
 
   const handleAddToCart = () => {
     console.log(`Added ${quantity} x ${name} to cart`);
@@ -140,19 +142,7 @@ export default function ProductInfo({
             <ShoppingCart className="w-5 h-5 mr-2" />
             In den Warenkorb
           </Button>
-          <Button
-            onClick={() => setIsWishlisted(!isWishlisted)}
-            variant="outline"
-            className="px-6 h-12"
-          >
-            <Heart
-              className={`w-5 h-5 ${
-                isWishlisted
-                  ? "fill-red-500 text-red-500"
-                  : "text-gray-600 dark:text-gray-300"
-              }`}
-            />
-          </Button>
+          <WishlistButton productId={productId} variant="button" />
           <Button variant="outline" className="px-6 h-12">
             <Share2 className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           </Button>

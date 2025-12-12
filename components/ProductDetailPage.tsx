@@ -62,6 +62,7 @@ export default function ProductDetailPage({
           {/* Product Info */}
           <div>
             <ProductInfo
+              productId={Number(product.id)}
               name={product.name}
               price={product.price}
               rating={product.rating}
