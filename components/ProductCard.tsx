@@ -1,7 +1,7 @@
 "use client";
 
 import { ShoppingCart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface ProductCardProps {
   id?: string;
@@ -19,7 +19,7 @@ export default function ProductCard({
   rating = 5,
 }: ProductCardProps) {
   return (
-    <div className="group cursor-pointer">
+    <Link href={`/product/${id}`} className="group cursor-pointer block">
       {/* Image Container */}
       <div className="relative bg-gray-200 dark:bg-slate-800 rounded-2xl overflow-hidden aspect-square mb-4 flex items-center justify-center">
         {image ? (
@@ -67,6 +67,6 @@ export default function ProductCard({
             : "Preis auf Anfrage"}
         </p>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 interface Category {
   id: string;
@@ -28,7 +29,11 @@ export function CategorieSection({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
         {categories.map((category) => (
-          <div key={category.id} className="group cursor-pointer">
+          <Link
+            key={category.id}
+            href={`/category/${category.id}`}
+            className="group cursor-pointer block"
+          >
             {/* Category Image */}
             <div className="relative bg-linear-to-br from-blue-100 to-blue-50 dark:from-slate-700 dark:to-slate-800 rounded-2xl overflow-hidden aspect-square mb-4 flex items-center justify-center">
               {category.image ? (
@@ -61,7 +66,7 @@ export function CategorieSection({
                 </p>
               )}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
