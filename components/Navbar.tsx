@@ -113,9 +113,16 @@ export default function Navbar() {
         const data = await response.json();
         setUser(data.user);
         setHasAdminSession(data.hasAdminSession);
+      } else {
+        // Not authenticated - reset all states
+        setUser(null);
+        setHasAdminSession(false);
       }
     } catch (error) {
       console.error("Error checking auth status:", error);
+      // On error, reset states to be safe
+      setUser(null);
+      setHasAdminSession(false);
     }
   };
 
@@ -199,10 +206,32 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
-      await checkAuthStatus();
+      // Hard reload to ensure all server components re-render
+      window.location.href = "/";
     } catch (error) {
       console.error("Error logging out:", error);
+    }
+  };
+
+  const handleAdminLogout = async () => {
+    try {
+      await fetch("/api/admin/auth/logout", { method: "POST" });
+      // Hard reload to ensure all server components re-render (especially admin layout)
+      window.location.reload();
+    } catch (error) {
+      console.error("Error logging out admin:", error);
+    }
+  };
+
+  const handleAdminActivate = async () => {
+    try {
+      const response = await fetch("/api/admin/auth/activate", { method: "POST" });
+      if (response.ok) {
+        // Hard reload to ensure all server components re-render with admin access
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error activating admin session:", error);
     }
   };
 
@@ -397,23 +426,41 @@ export default function Navbar() {
                         </Link>
                       </DropdownMenuItem>
 
-                      {/* Admin section */}
-                      {hasAdminSession && (
+                      {/* Admin section - show if user has admin rights */}
+                      {user?.isAdmin && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuLabel className="text-yellow-600 dark:text-yellow-500 flex items-center gap-2">
                             <Shield className="h-4 w-4" />
                             Admin
                           </DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href="/admin"
-                              className="flex items-center gap-2 cursor-pointer"
+                          {hasAdminSession ? (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <Link
+                                  href="/admin"
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <Settings className="h-4 w-4" />
+                                  <span>Admin Panel</span>
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={handleAdminLogout}
+                                className="cursor-pointer text-yellow-600 dark:text-yellow-500"
+                              >
+                                Admin abmelden
+                              </DropdownMenuItem>
+                            </>
+                          ) : (
+                            <DropdownMenuItem
+                              onClick={handleAdminActivate}
+                              className="cursor-pointer text-yellow-600 dark:text-yellow-500"
                             >
-                              <Settings className="h-4 w-4" />
-                              <span>Admin Panel</span>
-                            </Link>
-                          </DropdownMenuItem>
+                              <Shield className="h-4 w-4 mr-2" />
+                              Als Admin anmelden
+                            </DropdownMenuItem>
+                          )}
                         </>
                       )}
 
@@ -422,7 +469,7 @@ export default function Navbar() {
                         onClick={handleLogout}
                         className="cursor-pointer text-red-600 dark:text-red-500"
                       >
-                        Abmelden (User)
+                        Abmelden
                       </DropdownMenuItem>
                     </>
                   ) : (
