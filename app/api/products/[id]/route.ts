@@ -1,41 +1,81 @@
 /**
- * API Route: /api/products/[id]
+ * Public API Route: /api/products/[id]
  *
- * GET    - Fetch a single product by ID
- * PUT    - Update a product by ID
- * DELETE - Delete a product by ID
+ * GET - Fetch a single product by ID (public access)
  */
+
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const productId = params.id;
-  // TODO: Implement GET handler
-  // - Fetch product by ID from database
-  // - Return 404 if not found
-  return Response.json({ message: `GET /api/products/${productId}` });
-}
+  try {
+    const { id } = await params;
+    const productId = parseInt(id);
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const productId = params.id;
-  // TODO: Implement PUT handler
-  // - Validate request body
-  // - Update product in database
-  // - Return updated product
-  return Response.json({ message: `PUT /api/products/${productId}` });
-}
+    if (isNaN(productId)) {
+      return NextResponse.json(
+        { error: "Invalid product ID" },
+        { status: 400 }
+      );
+    }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const productId = params.id;
-  // TODO: Implement DELETE handler
-  // - Delete product from database
-  // - Return success message
-  return Response.json({ message: `DELETE /api/products/${productId}` });
+    const product = await db.product.findUnique({
+      where: { id: productId },
+      include: {
+        images: {
+          orderBy: { index: "asc" },
+        },
+        categories: {
+          include: {
+            category: true,
+          },
+        },
+        brand: true,
+        details: true,
+        reviews: {
+          include: {
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        },
+      },
+    });
+
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    // Calculate average rating
+    const averageRating =
+      product.reviews.length > 0
+        ? product.reviews.reduce((acc, review) => acc + review.rating, 0) /
+          product.reviews.length
+        : 0;
+
+    return NextResponse.json({
+      product: {
+        ...product,
+        averageRating,
+        reviewCount: product.reviews.length,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch product" },
+      { status: 500 }
+    );
+  }
 }

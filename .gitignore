@@ -45,5 +45,6 @@ postgres_data
 .idea
 
 /app/generated/prisma
+/public/productImages
 
 package-lock.json

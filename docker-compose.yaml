@@ -1,7 +1,10 @@
+# Docker Compose für lokale Entwicklung
+# Für Production/TrueNAS siehe: docker-compose.truenas.yaml
+
 services:
   db:
-    image: postgres:15
-    container_name: postgres_db
+    image: postgres:15-alpine
+    container_name: hans-peter-postgres_db
     restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
@@ -11,4 +14,10 @@ services:
       - "5432:5432"
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 

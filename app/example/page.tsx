@@ -329,7 +329,7 @@ export default function Home() {
               <Slider
                 value={sliderValue}
                 onValueChange={setSliderValue}
-                max={10000000000}
+                max={100}
                 step={1}
                 className="w-full"
               />

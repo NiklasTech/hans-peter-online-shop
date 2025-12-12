@@ -4,16 +4,36 @@
  * TypeScript interfaces and types for product-related data structures
  */
 
-export interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  price: number;
-  stock: number;
-  category?: string;
-  image?: string;
+export interface ProductImage {
+  id: number;
+  url: string;
+  index: number;
+  createdAt: Date;
+}
+
+export interface ProductDetail {
+  id: number;
+  key: string;
+  value: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface Product {
+  id: number;
+  name: string;
+  description?: string | null;
+  price: number;
+  previewImage?: string | null;
+  stock: number;
+  sku?: string | null;
+  brandId: number;
+  createdAt: Date;
+  updatedAt: Date;
+  images?: ProductImage[];
+  details?: ProductDetail[];
+  categories?: { categoryId: number; category?: { name: string } }[];
+  brand?: { id: number; name: string };
 }
 
 export interface CreateProductInput {
@@ -21,10 +41,16 @@ export interface CreateProductInput {
   description?: string;
   price: number;
   stock: number;
-  category?: string;
-  image?: string;
+  sku?: string;
+  categoryIds: number[];
+  brandId: number;
+  previewImage?: string;
+  images?: { url: string; index: number }[];
+  details?: { key: string; value: string }[];
 }
 
 export interface UpdateProductInput extends Partial<CreateProductInput> {}
 
 export type ProductWithoutDates = Omit<Product, "createdAt" | "updatedAt">;
+
+
