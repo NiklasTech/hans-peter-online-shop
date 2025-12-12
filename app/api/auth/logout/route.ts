@@ -1,16 +1,17 @@
 /**
  * API Route: /api/auth/logout
  *
- * POST - Logout user (clears only user session, NOT admin session)
+ * POST - Logout user (clears both user and admin session)
  */
 
 import { NextResponse } from "next/server";
-import { clearUserSession } from "@/lib/auth";
+import { clearUserSession, clearAdminSession } from "@/lib/auth";
 
 export async function POST() {
   try {
-    // Clear only the user session cookie
+    // Clear both user and admin session cookies
     await clearUserSession();
+    await clearAdminSession();
 
     return NextResponse.json({
       message: "Logout successful",
