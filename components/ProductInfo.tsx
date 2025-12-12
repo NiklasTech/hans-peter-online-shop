@@ -61,7 +61,8 @@ export default function ProductInfo({
               ))}
             </div>
             <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-              {rating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? "Bewertung" : "Bewertungen"})
+              {rating.toFixed(1)} ({reviewCount}{" "}
+              {reviewCount === 1 ? "Bewertung" : "Bewertungen"})
             </span>
           </div>
         </div>
@@ -176,9 +177,7 @@ export default function ProductInfo({
         <p className="text-blue-900 dark:text-blue-100">
           ✓ 30 Tage Rückgaberecht
         </p>
-        <p className="text-blue-900 dark:text-blue-100">
-          ✓ Sichere Zahlung
-        </p>
+        <p className="text-blue-900 dark:text-blue-100">✓ Sichere Zahlung</p>
       </div>
     </div>
   );

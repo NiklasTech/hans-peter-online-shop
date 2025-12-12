@@ -30,7 +30,7 @@ const adminLinks = [
 
 export default function Sidebar({ isAdmin = false }: SidebarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleAdminLogout = async () => {

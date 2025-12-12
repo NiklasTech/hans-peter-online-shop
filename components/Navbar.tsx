@@ -39,6 +39,7 @@ import {
   User,
   Settings,
   Shield,
+  Loader2,
 } from "lucide-react";
 import {
   Popover,
@@ -91,6 +92,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
@@ -100,6 +102,11 @@ export default function Navbar() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [error, setError] = useState("");
+
+  // Prevent hydration mismatch by only rendering interactive components after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -257,30 +264,40 @@ export default function Navbar() {
             </Link>
 
             {/* Navigation Menu - Desktop */}
-            <NavigationMenu className="hidden lg:flex">
-              <NavigationMenuList>
+            {isMounted ? (
+              <NavigationMenu className="hidden lg:flex">
+                <NavigationMenuList>
+                  {categories.map((category) => (
+                    <NavigationMenuItem key={category.name}>
+                      <NavigationMenuTrigger className="text-sm font-medium text-gray-900 dark:text-white">
+                        {category.name}
+                      </NavigationMenuTrigger>
+                      <NavigationMenuContent>
+                        <div className="grid w-[200px] gap-2 p-4">
+                          {category.subcategories.map((sub) => (
+                            <Link key={sub.href} href={sub.href}>
+                              <NavigationMenuLink asChild>
+                                <span className="block px-3 py-2 text-sm text-gray-900 dark:text-white rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition">
+                                  {sub.name}
+                                </span>
+                              </NavigationMenuLink>
+                            </Link>
+                          ))}
+                        </div>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  ))}
+                </NavigationMenuList>
+              </NavigationMenu>
+            ) : (
+              <div className="hidden lg:flex gap-4">
                 {categories.map((category) => (
-                  <NavigationMenuItem key={category.name}>
-                    <NavigationMenuTrigger className="text-sm font-medium text-gray-900 dark:text-white">
-                      {category.name}
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent>
-                      <div className="grid w-[200px] gap-2 p-4">
-                        {category.subcategories.map((sub) => (
-                          <Link key={sub.href} href={sub.href}>
-                            <NavigationMenuLink asChild>
-                              <span className="block px-3 py-2 text-sm text-gray-900 dark:text-white rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition">
-                                {sub.name}
-                              </span>
-                            </NavigationMenuLink>
-                          </Link>
-                        ))}
-                      </div>
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
+                  <span key={category.name} className="text-sm font-medium text-gray-900 dark:text-white px-4 py-2">
+                    {category.name}
+                  </span>
                 ))}
-              </NavigationMenuList>
-            </NavigationMenu>
+              </div>
+            )}
 
             {/* Mobile Menu Button */}
             <button
@@ -319,174 +336,191 @@ export default function Navbar() {
               </Link>
 
               {/* Shopping Cart with Popover */}
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="relative cursor-pointer hover:opacity-80 transition">
-                    <ShoppingCart className="h-6 w-6 text-gray-900 dark:text-white" />
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                      0
-                    </span>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-4" align="end">
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-lg">Warenkorb</h3>
-
-                    {/* Cart Items (Empty State) */}
-                    <div className="text-center py-8">
-                      <p className="text-gray-500 dark:text-gray-400">
-                        Dein Warenkorb ist leer
-                      </p>
+              {isMounted ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="relative cursor-pointer hover:opacity-80 transition">
+                      <ShoppingCart className="h-6 w-6 text-gray-900 dark:text-white" />
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                        0
+                      </span>
                     </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-80 p-4" align="end">
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Warenkorb</h3>
 
-                    {/* Subtotal */}
-                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                      <div className="flex justify-between mb-4">
-                        <span className="font-medium">Summe:</span>
-                        <span className="font-semibold">€0,00</span>
+                      {/* Cart Items (Empty State) */}
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 dark:text-gray-400">
+                          Dein Warenkorb ist leer
+                        </p>
+                      </div>
+
+                      {/* Subtotal */}
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                        <div className="flex justify-between mb-4">
+                          <span className="font-medium">Summe:</span>
+                          <span className="font-semibold">€0,00</span>
+                        </div>
+                      </div>
+
+                      {/* Buttons */}
+                      <div className="space-y-2">
+                        <Link href="/" className="block">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {}}
+                          >
+                            Weiter einkaufen
+                          </Button>
+                        </Link>
+                        <Link href="/checkout" className="block">
+                          <Button className="w-full">Zur Kasse</Button>
+                        </Link>
                       </div>
                     </div>
-
-                    {/* Buttons */}
-                    <div className="space-y-2">
-                      <Link href="/" className="block">
-                        <Button
-                          variant="outline"
-                          className="w-full"
-                          onClick={() => {}}
-                        >
-                          Weiter einkaufen
-                        </Button>
-                      </Link>
-                      <Link href="/checkout" className="block">
-                        <Button className="w-full">Zur Kasse</Button>
-                      </Link>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <div className="relative cursor-pointer hover:opacity-80 transition">
+                  <ShoppingCart className="h-6 w-6 text-gray-900 dark:text-white" />
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    0
+                  </span>
+                </div>
+              )}
 
               {/* Avatar / Auth */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div className="relative cursor-pointer">
-                    <Avatar className="hover:opacity-80 transition">
-                      {user ? (
-                        <>
-                          <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
-                          <AvatarFallback>{getUserInitials(user.name)}</AvatarFallback>
-                        </>
-                      ) : (
-                        <AvatarFallback>AG</AvatarFallback>
-                      )}
-                    </Avatar>
-                    {/* Admin badge indicator */}
-                    {hasAdminSession && (
-                      <div className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full p-1">
-                        <Shield className="h-3 w-3 text-white" />
-                      </div>
-                    )}
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {user ? (
-                    <>
-                      <DropdownMenuLabel>
-                        <div>
-                          <p className="font-medium">{user.name}</p>
-                          <p className="text-xs text-gray-500">{user.email}</p>
+              {isMounted ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="relative cursor-pointer">
+                      <Avatar className="hover:opacity-80 transition">
+                        {user ? (
+                          <>
+                            <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
+                            <AvatarFallback>{getUserInitials(user.name)}</AvatarFallback>
+                          </>
+                        ) : (
+                          <AvatarFallback>AG</AvatarFallback>
+                        )}
+                      </Avatar>
+                      {/* Admin badge indicator */}
+                      {hasAdminSession && (
+                        <div className="absolute -bottom-1 -right-1 bg-yellow-500 rounded-full p-1">
+                          <Shield className="h-3 w-3 text-white" />
                         </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/profile"
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <User className="h-4 w-4" />
-                          <span>Mein Profil</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/orders"
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <ShoppingBag className="h-4 w-4" />
-                          <span>Meine Bestellungen</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href="/settings"
-                          className="flex items-center gap-2 cursor-pointer"
-                        >
-                          <Settings className="h-4 w-4" />
-                          <span>Einstellungen</span>
-                        </Link>
-                      </DropdownMenuItem>
+                      )}
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {user ? (
+                      <>
+                        <DropdownMenuLabel>
+                          <div>
+                            <p className="font-medium">{user.name}</p>
+                            <p className="text-xs text-gray-500">{user.email}</p>
+                          </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/profile"
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <User className="h-4 w-4" />
+                            <span>Mein Profil</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/orders"
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                            <span>Meine Bestellungen</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/settings"
+                            className="flex items-center gap-2 cursor-pointer"
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>Einstellungen</span>
+                          </Link>
+                        </DropdownMenuItem>
 
-                      {/* Admin section - show if user has admin rights */}
-                      {user?.isAdmin && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuLabel className="text-yellow-600 dark:text-yellow-500 flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            Admin
-                          </DropdownMenuLabel>
-                          {hasAdminSession ? (
-                            <>
-                              <DropdownMenuItem asChild>
-                                <Link
-                                  href="/admin"
-                                  className="flex items-center gap-2 cursor-pointer"
+                        {/* Admin section - show if user has admin rights */}
+                        {user?.isAdmin && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel className="text-yellow-600 dark:text-yellow-500 flex items-center gap-2">
+                              <Shield className="h-4 w-4" />
+                              Admin
+                            </DropdownMenuLabel>
+                            {hasAdminSession ? (
+                              <>
+                                <DropdownMenuItem asChild>
+                                  <Link
+                                    href="/admin"
+                                    className="flex items-center gap-2 cursor-pointer"
+                                  >
+                                    <Settings className="h-4 w-4" />
+                                    <span>Admin Panel</span>
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={handleAdminLogout}
+                                  className="cursor-pointer text-yellow-600 dark:text-yellow-500"
                                 >
-                                  <Settings className="h-4 w-4" />
-                                  <span>Admin Panel</span>
-                                </Link>
-                              </DropdownMenuItem>
+                                  Admin abmelden
+                                </DropdownMenuItem>
+                              </>
+                            ) : (
                               <DropdownMenuItem
-                                onClick={handleAdminLogout}
+                                onClick={handleAdminActivate}
                                 className="cursor-pointer text-yellow-600 dark:text-yellow-500"
                               >
-                                Admin abmelden
+                                <Shield className="h-4 w-4 mr-2" />
+                                Als Admin anmelden
                               </DropdownMenuItem>
-                            </>
-                          ) : (
-                            <DropdownMenuItem
-                              onClick={handleAdminActivate}
-                              className="cursor-pointer text-yellow-600 dark:text-yellow-500"
-                            >
-                              <Shield className="h-4 w-4 mr-2" />
-                              Als Admin anmelden
-                            </DropdownMenuItem>
-                          )}
-                        </>
-                      )}
+                            )}
+                          </>
+                        )}
 
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={handleLogout}
-                        className="cursor-pointer text-red-600 dark:text-red-500"
-                      >
-                        Abmelden
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setIsAuthDialogOpen(true);
-                          setAuthMode("login");
-                        }}
-                        className="cursor-pointer"
-                      >
-                        Login / Registrieren
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={handleLogout}
+                          className="cursor-pointer text-red-600 dark:text-red-500"
+                        >
+                          Abmelden
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setIsAuthDialogOpen(true);
+                            setAuthMode("login");
+                          }}
+                          className="cursor-pointer"
+                        >
+                          Login / Registrieren
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="relative cursor-pointer">
+                  <Avatar className="hover:opacity-80 transition">
+                    <AvatarFallback>AG</AvatarFallback>
+                  </Avatar>
+                </div>
+              )}
             </div>
           </div>
         </div>
