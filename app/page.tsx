@@ -107,6 +107,11 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { AlertCircle } from "lucide-react";
+import { EmailSendButton } from './email/send-mail-button';
+
+function App() {
+  return <EmailSendButton />;
+}
 
 export default function Home() {
   const [checked, setChecked] = useState<boolean>(true);
@@ -155,7 +160,7 @@ export default function Home() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                <Button>Default</Button>
+                <Button >Default</Button>
                 <Button variant="secondary">Secondary</Button>
                 <Button variant="destructive">Destructive</Button>
                 <Button variant="outline">Outline</Button>
