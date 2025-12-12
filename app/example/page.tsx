@@ -108,6 +108,9 @@ import {
 } from "@/components/ui/navigation-menu";
 import { AlertCircle } from "lucide-react";
 
+import { EmailSendButton } from '@/components/ui/send-mail-button';
+
+
 export default function Home() {
   const [checked, setChecked] = useState<boolean>(true);
   const [switchOn, setSwitchOn] = useState(true);
@@ -122,7 +125,7 @@ export default function Home() {
           <p className="text-gray-600 dark:text-gray-400">
             All installed components showcase
           </p>
-        </div>
+        </div>    
 
         {/* Breadcrumb */}
         <div className="mb-8">
@@ -161,6 +164,10 @@ export default function Home() {
                 <Button variant="outline">Outline</Button>
                 <Button variant="ghost">Ghost</Button>
               </div>
+                <div className="p-8">
+                  <h1 className="text-2xl mb-4">E-Mail versenden</h1>
+                  <EmailSendButton />
+                </div>
               <div className="flex flex-wrap gap-2">
                 <Button size="sm">Small</Button>
                 <Button size="default">Default</Button>
