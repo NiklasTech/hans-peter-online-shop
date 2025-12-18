@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -84,7 +85,19 @@ interface UserData {
   isAdmin: boolean;
 }
 
+interface SearchProduct {
+  id: number;
+  name: string;
+  description?: string | null;
+  price: number;
+  previewImage?: string | null;
+  stock: number;
+  brand?: { name: string };
+  categories?: string[];
+}
+
 export default function Navbar() {
+  const router = useRouter();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [user, setUser] = useState<UserData | null>(null);
@@ -94,6 +107,14 @@ export default function Navbar() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchProduct[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Form states
   const [loginEmail, setLoginEmail] = useState("");
@@ -145,6 +166,59 @@ export default function Navbar() {
     window.addEventListener("wishlist-updated", handleWishlistUpdate);
     return () => {
       window.removeEventListener("wishlist-updated", handleWishlistUpdate);
+    };
+  }, []);
+
+  // Handle search input with debounce
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (searchQuery.trim() === "") {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+
+    searchTimeoutRef.current = setTimeout(async () => {
+      try {
+        const response = await fetch(
+          `/api/products/search?q=${encodeURIComponent(searchQuery)}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data.products || []);
+          setShowSearchResults(true);
+        }
+      } catch (error) {
+        console.error("Error searching products:", error);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300); // 300ms debounce
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -286,6 +360,34 @@ export default function Navbar() {
       .slice(0, 2);
   };
 
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("de-DE", {
+      style: "currency",
+      currency: "EUR",
+    }).format(price);
+  };
+
+  const handleSearchResultClick = (productId: number) => {
+    setShowSearchResults(false);
+    setSearchQuery("");
+    router.push(`/product/${productId}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setShowSearchResults(false);
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleViewAllResults = () => {
+    if (searchQuery.trim()) {
+      setShowSearchResults(false);
+      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
   return (
     <>
       <nav className="border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-950 sticky top-0 z-40">
@@ -347,16 +449,121 @@ export default function Navbar() {
             </button>
 
             {/* Search Bar */}
-            <div className="hidden sm:flex flex-1 max-w-md">
-              <div className="relative">
+            <form onSubmit={handleSearchSubmit} className="hidden sm:flex flex-1 max-w-md relative" ref={searchRef}>
+              <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Produkte suchen..."
-                  className="pl-10 dark:bg-slate-900 dark:border-gray-700"
+                  placeholder="Produkte suchen (Name, Kategorie, etc.)..."
+                  className="pl-10 dark:bg-slate-900 dark:border-gray-700 w-full"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => {
+                    if (searchResults.length > 0) {
+                      setShowSearchResults(true);
+                    }
+                  }}
                 />
+                {isSearching && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+                )}
               </div>
-            </div>
+
+              {/* Search Suggestions Dropdown */}
+              {showSearchResults && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-[500px] overflow-y-auto z-50">
+                  {searchResults.length > 0 ? (
+                    <>
+                      {/* Suggestions Header */}
+                      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                          Vorschläge
+                        </p>
+                      </div>
+
+                      {/* Product Suggestions - Show max 5 */}
+                      <div className="py-1">
+                        {searchResults.slice(0, 5).map((product) => (
+                          <div
+                            key={product.id}
+                            onClick={() => handleSearchResultClick(product.id)}
+                            className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition-colors flex items-center gap-3"
+                          >
+                            {/* Product Image */}
+                            <div className="w-12 h-12 rounded overflow-hidden bg-gray-100 dark:bg-slate-800 shrink-0">
+                              {product.previewImage ? (
+                                <img
+                                  src={product.previewImage}
+                                  alt={product.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                  <Search className="h-6 w-6" />
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Product Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  {product.name}
+                                </span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+                                  #{product.id}
+                                </span>
+                              </div>
+                              {product.brand && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {product.brand.name}
+                                </p>
+                              )}
+                              <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                                {formatPrice(product.price)}
+                              </p>
+                            </div>
+
+                            {/* Stock Status */}
+                            <div className="shrink-0">
+                              {product.stock > 0 ? (
+                                <span className="text-xs text-green-600 dark:text-green-400">
+                                  Verfügbar
+                                </span>
+                              ) : (
+                                <span className="text-xs text-red-600 dark:text-red-400">
+                                  Ausverkauft
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* View All Results Button */}
+                      <div className="border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          type="button"
+                          onClick={handleViewAllResults}
+                          className="w-full px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-center"
+                        >
+                          Alle {searchResults.length} Ergebnisse anzeigen →
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Keine Produkte gefunden
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                        Drücke Enter für erweiterte Suche
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </form>
 
             {/* Cart, Wishlist and Avatar */}
             <div className="flex items-center gap-4">
