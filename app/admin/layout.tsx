@@ -17,9 +17,9 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-73px)]">
+    <>
       <Sidebar isAdmin={true} />
-      <main className="flex-1 overflow-auto">{children}</main>
-    </div>
+      <main className="min-h-[calc(100vh-73px)] overflow-auto">{children}</main>
+    </>
   );
 }
