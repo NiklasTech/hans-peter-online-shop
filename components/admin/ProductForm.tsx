@@ -272,7 +272,7 @@ export default function ProductForm({
   }, [isEditing, productId, loadProduct]);
 
   // Image upload
-  const uploadImage = async (file: File): Promise<string> => {
+  const uploadImage = async (file: File): Promise<ProductImage> => {
     if (!productId) {
       throw new Error("Product ID is required for image upload");
     }
@@ -280,7 +280,6 @@ export default function ProductForm({
     const formData = new FormData();
     formData.append("file", file);
     formData.append("productId", productId.toString());
-    formData.append("id", productId.toString());
 
     const response = await fetch("/api/admin/product/imageUpload", {
       method: "POST",
@@ -293,7 +292,7 @@ export default function ProductForm({
     }
 
     const data = await response.json();
-    return data.image.url;
+    return data.image;
   };
 
   // Add files - Upload sequentially to avoid unique key constraints
@@ -325,13 +324,13 @@ export default function ProductForm({
       const tempUrl = newImages[i].url;
 
       try {
-        const uploadedUrl = await uploadImage(file);
+        const savedImage = await uploadImage(file);
 
         // Update the specific image with the real URL
         setImages((prev) =>
           prev.map((img) =>
             img.url === tempUrl
-              ? { ...img, url: uploadedUrl, uploading: false }
+              ? { ...img, url: savedImage.url, uploading: false }
               : img
           )
         );

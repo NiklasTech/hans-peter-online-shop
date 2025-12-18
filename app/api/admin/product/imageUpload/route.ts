@@ -57,24 +57,19 @@ export async function POST(request: Request) {
     // Process image
     const processor = new ImageProcessor(parsedProductId);
 
-    const url = await processor.saveAsAvif(
+    const savedImage = await processor.saveAsAvif(
       file,
       { maxWidth: 2560, maxHeight: 2560 },
       { quality: 75, preserveTransparency: true }
     );
 
-    // Create preview for this image
-    const imagePreviewUrl = await processor.createImagePreview(file, parsedProductId, nextIndex);
-
     // If this is the first image (index 0), also create product preview image
-    let productPreviewUrl: string | null = null;
     if (nextIndex === 0) {
-      productPreviewUrl = await processor.createPreviewImage(file, parsedProductId);
 
       // Update product with preview image
       await db.product.update({
         where: { id: parsedProductId },
-        data: { previewImage: productPreviewUrl },
+        data: { previewImage: savedImage.previewUrl },
       });
     }
 
@@ -82,15 +77,14 @@ export async function POST(request: Request) {
     const image = await db.productImage.create({
       data: {
         productId: parsedProductId,
-        url,
-        previewUrl: imagePreviewUrl,
+        url: savedImage.url,
+        previewUrl: savedImage.previewUrl,
         index: nextIndex,
       },
     });
 
     return NextResponse.json({
       image,
-      productPreviewImage: productPreviewUrl
     }, { status: 201 });
   } catch (error) {
     console.error("Error uploading file:", error);

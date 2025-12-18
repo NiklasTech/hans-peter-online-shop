@@ -44,7 +44,7 @@ export async function DELETE(request: Request) {
     // Delete physical file and its preview
     const processor = new ImageProcessor(image.productId);
     await processor.deleteImageByUrl(image.url);
-    await processor.deleteImagePreview(image.productId, image.index);
+    await processor.deleteImageByUrl(image.previewUrl);
 
     // If this was the first image, check if there's a new first image to update product preview
     const wasFirstImage = image.index === 0;
@@ -73,8 +73,6 @@ export async function DELETE(request: Request) {
           where: { id: image.productId },
           data: { previewImage: null },
         });
-        // Delete product preview image
-        await processor.deletePreviewImage(image.productId);
       }
     }
 
