@@ -101,7 +101,7 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, description, price, stock, categoryIds, brandId, previewImage, images, details } = body;
+    const { id, name, description, price, stock, categoryIds, brandId, images, details } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -131,7 +131,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Update product
+    // Update product (previewImage is managed automatically via imageUpload and updatePreview routes)
     const product = await db.product.update({
       where: { id: productId },
       data: {
@@ -140,7 +140,6 @@ export async function PUT(request: Request) {
         price: price !== undefined ? parseFloat(price) : undefined,
         stock: stock !== undefined ? parseInt(stock) : undefined,
         brandId: brandId !== undefined ? parseInt(brandId) : undefined,
-        previewImage: previewImage !== undefined ? previewImage : undefined,
         images: images
           ? {
               deleteMany: {},
@@ -245,7 +244,7 @@ export async function DELETE(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, description, price, stock, categoryIds, brandId, previewImage, images, details } = body;
+    const { name, description, price, stock, categoryIds, brandId, images, details } = body;
 
     // Validierung
     if (!name || price === undefined || stock === undefined || !categoryIds || categoryIds.length === 0 || !brandId) {
@@ -263,7 +262,7 @@ export async function POST(request: Request) {
         price: parseFloat(price),
         stock: parseInt(stock),
         brandId: parseInt(brandId),
-        previewImage: previewImage || null,
+        previewImage: null, // Will be set automatically when first image is uploaded
         images: {
           create:
             images?.map((img: { url: string; index: number }) => ({

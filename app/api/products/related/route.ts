@@ -76,10 +76,10 @@ export async function GET(request: Request) {
     });
 
     // Calculate average rating for each product
-    const productsWithRating = products.map((product) => {
+    const productsWithRating = products.map((product: any) => {
       const averageRating =
         product.reviews.length > 0
-          ? product.reviews.reduce((acc, review) => acc + review.rating, 0) /
+          ? product.reviews.reduce((acc: number, review: { rating: number }) => acc + review.rating, 0) /
             product.reviews.length
           : 0;
 

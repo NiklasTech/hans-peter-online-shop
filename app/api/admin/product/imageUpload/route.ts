@@ -57,22 +57,35 @@ export async function POST(request: Request) {
     // Process image
     const processor = new ImageProcessor(parsedProductId);
 
-    const url = await processor.saveAsAvif(
+    const savedImage = await processor.saveAsAvif(
       file,
       { maxWidth: 2560, maxHeight: 2560 },
       { quality: 75, preserveTransparency: true }
     );
 
-    // Save to database
+    // If this is the first image (index 0), also create product preview image
+    if (nextIndex === 0) {
+
+      // Update product with preview image
+      await db.product.update({
+        where: { id: parsedProductId },
+        data: { previewImage: savedImage.previewUrl },
+      });
+    }
+
+    // Save to database with preview URL
     const image = await db.productImage.create({
       data: {
         productId: parsedProductId,
-        url,
+        url: savedImage.url,
+        previewUrl: savedImage.previewUrl,
         index: nextIndex,
       },
     });
 
-    return NextResponse.json({ image }, { status: 201 });
+    return NextResponse.json({
+      image,
+    }, { status: 201 });
   } catch (error) {
     console.error("Error uploading file:", error);
     return NextResponse.json(
