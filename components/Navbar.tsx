@@ -464,11 +464,11 @@ export default function Navbar() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                           <Link
-                            href="/profile"
+                            href="/account"
                             className="flex items-center gap-2 cursor-pointer"
                           >
                             <User className="h-4 w-4" />
-                            <span>Mein Profil</span>
+                            <span>Mein Konto</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -482,11 +482,11 @@ export default function Navbar() {
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link
-                            href="/settings"
+                            href="/wishlist"
                             className="flex items-center gap-2 cursor-pointer"
                           >
-                            <Settings className="h-4 w-4" />
-                            <span>Einstellungen</span>
+                            <Heart className="h-4 w-4" />
+                            <span>Wunschliste</span>
                           </Link>
                         </DropdownMenuItem>
 
