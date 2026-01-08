@@ -16,7 +16,9 @@
     "db:seed:all": "npm run db:seed:users && npm run db:seed:products",
     "db:seed:all:unsplash": "npm run db:seed:users && npm run db:seed:products:unsplash",
     "db:clean": "tsx prisma/seed-clean.ts",
-    "db:reset": "npm run db:clean && npm run db:seed:all:unsplash"
+    "db:reset": "npm run db:clean && npm run db:seed:all:unsplash",
+    "db:backup": "tsx scripts/backup-database.ts",
+    "db:restore": "tsx scripts/restore-database.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed-users.ts"

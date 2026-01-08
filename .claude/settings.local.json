@@ -23,7 +23,9 @@
       "Bash(pg_isready:*)",
       "Bash(git mv:*)",
       "Bash(npm uninstall:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(where:*)",
+      "Bash(docker ps:*)"
     ],
     "deny": [],
     "ask": []
