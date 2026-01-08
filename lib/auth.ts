@@ -154,13 +154,13 @@ export async function getCurrentAdmin(): Promise<AdminPayload | null> {
 
   if (!session || session.expiresAt < new Date()) {
     // Session invalid or expired
-    await clearAdminSession();
+    // Note: Cookie deletion must happen in Server Action/Route Handler
     return null;
   }
 
   // Verify user is still an admin
   if (!session.user.isAdmin) {
-    await clearAdminSession();
+    // Note: Cookie deletion must happen in Server Action/Route Handler
     return null;
   }
 

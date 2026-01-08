@@ -19,7 +19,11 @@
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(git worktree:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(pg_isready:*)",
+      "Bash(git mv:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

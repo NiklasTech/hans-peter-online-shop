@@ -107,6 +107,8 @@ export default function Navbar() {
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [cartCount, setCartCount] = useState(0);
+  const [cartItems, setCartItems] = useState<any[]>([]);
 
   // Search states
   const [searchQuery, setSearchQuery] = useState("");
@@ -148,24 +150,60 @@ export default function Navbar() {
     }
   };
 
-  // Fetch wishlist count on mount and when user changes
+  // Fetch cart count
+  const fetchCartCount = async () => {
+    try {
+      const response = await fetch("/api/cart/count");
+      if (response.ok) {
+        const data = await response.json();
+        setCartCount(data.count);
+      }
+    } catch (error) {
+      console.error("Error fetching cart count:", error);
+    }
+  };
+
+  // Fetch cart items
+  const fetchCartItems = async () => {
+    try {
+      const response = await fetch("/api/cart");
+      if (response.ok) {
+        const data = await response.json();
+        setCartItems(data.cartItems || []);
+      }
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+    }
+  };
+
+  // Fetch wishlist and cart count on mount and when user changes
   useEffect(() => {
     if (user) {
       fetchWishlistCount();
+      fetchCartCount();
     } else {
       setWishlistCount(0);
+      setCartCount(0);
+      setCartItems([]);
     }
   }, [user]);
 
-  // Listen for wishlist updates
+  // Listen for wishlist and cart updates
   useEffect(() => {
     const handleWishlistUpdate = () => {
       fetchWishlistCount();
     };
 
+    const handleCartUpdate = () => {
+      fetchCartCount();
+      fetchCartItems();
+    };
+
     window.addEventListener("wishlist-updated", handleWishlistUpdate);
+    window.addEventListener("cart-updated", handleCartUpdate);
     return () => {
       window.removeEventListener("wishlist-updated", handleWishlistUpdate);
+      window.removeEventListener("cart-updated", handleCartUpdate);
     };
   }, []);
 
@@ -583,31 +621,89 @@ export default function Navbar() {
               {isMounted ? (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <div className="relative cursor-pointer hover:opacity-80 transition">
+                    <div
+                      className="relative cursor-pointer hover:opacity-80 transition"
+                      onClick={fetchCartItems}
+                    >
                       <ShoppingCart className="h-6 w-6 text-gray-900 dark:text-white" />
-                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                        0
-                      </span>
+                      {cartCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                          {cartCount > 99 ? "99+" : cartCount}
+                        </span>
+                      )}
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="w-80 p-4" align="end">
+                  <PopoverContent className="w-96 p-4" align="end">
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">Warenkorb</h3>
 
-                      {/* Cart Items (Empty State) */}
-                      <div className="text-center py-8">
-                        <p className="text-gray-500 dark:text-gray-400">
-                          Dein Warenkorb ist leer
-                        </p>
-                      </div>
+                      {/* Cart Items */}
+                      {cartItems.length > 0 ? (
+                        <>
+                          <div className="max-h-[400px] overflow-y-auto space-y-3">
+                            {cartItems.map((item) => (
+                              <div key={item.id} className="flex gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
+                                {/* Product Image */}
+                                <div className="w-16 h-16 rounded bg-gray-100 dark:bg-slate-700 shrink-0 overflow-hidden">
+                                  {item.product.previewImage ? (
+                                    <img
+                                      src={item.product.previewImage}
+                                      alt={item.product.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                      <ShoppingCart className="h-6 w-6" />
+                                    </div>
+                                  )}
+                                </div>
 
-                      {/* Subtotal */}
-                      <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                        <div className="flex justify-between mb-4">
-                          <span className="font-medium">Summe:</span>
-                          <span className="font-semibold">€0,00</span>
+                                {/* Product Info */}
+                                <div className="flex-1 min-w-0">
+                                  <Link href={`/product/${item.productId}`}>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate hover:text-blue-600 dark:hover:text-blue-400">
+                                      {item.product.name}
+                                    </p>
+                                  </Link>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {item.product.brand?.name}
+                                  </p>
+                                  <div className="flex items-center justify-between mt-1">
+                                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                      {formatPrice(item.product.price)}
+                                    </span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      Menge: {item.quantity}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Subtotal */}
+                          <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                            <div className="flex justify-between mb-4">
+                              <span className="font-medium">Summe:</span>
+                              <span className="font-semibold">
+                                {formatPrice(
+                                  cartItems.reduce(
+                                    (sum, item) => sum + item.product.price * item.quantity,
+                                    0
+                                  )
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-8">
+                          <ShoppingCart className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
+                          <p className="text-gray-500 dark:text-gray-400">
+                            Dein Warenkorb ist leer
+                          </p>
                         </div>
-                      </div>
+                      )}
 
                       {/* Buttons */}
                       <div className="space-y-2">
@@ -615,13 +711,14 @@ export default function Navbar() {
                           <Button
                             variant="outline"
                             className="w-full"
-                            onClick={() => {}}
                           >
                             Weiter einkaufen
                           </Button>
                         </Link>
                         <Link href="/checkout" className="block">
-                          <Button className="w-full">Zur Kasse</Button>
+                          <Button className="w-full" disabled={cartItems.length === 0}>
+                            Zur Kasse
+                          </Button>
                         </Link>
                       </div>
                     </div>
@@ -630,9 +727,11 @@ export default function Navbar() {
               ) : (
                 <div className="relative cursor-pointer hover:opacity-80 transition">
                   <ShoppingCart className="h-6 w-6 text-gray-900 dark:text-white" />
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                    0
-                  </span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                      {cartCount > 99 ? "99+" : cartCount}
+                    </span>
+                  )}
                 </div>
               )}
 
