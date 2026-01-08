@@ -81,8 +81,28 @@ export default function WishlistPage() {
   };
 
   const addToCart = async (productId: number) => {
-    // TODO: Implement add to cart functionality
-    console.log("Add to cart:", productId);
+    try {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          quantity: 1,
+        }),
+      });
+
+      if (response.ok) {
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+        // Optional: Show success message
+        alert("Produkt wurde zum Warenkorb hinzugefügt!");
+      } else {
+        const data = await response.json();
+        alert(data.error || "Fehler beim Hinzufügen zum Warenkorb");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Ein Fehler ist aufgetreten");
+    }
   };
 
   if (isLoading) {

@@ -56,3 +56,10 @@ docker-volumes/
 
 # Lokale Produktbilder nicht committen
 productImages/
+
+# Database backups
+/backups/
+*.sql
+
+# Temp test files
+test-products.ts

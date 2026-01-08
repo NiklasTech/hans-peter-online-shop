@@ -1,8 +1,9 @@
 "use client";
 
-import { ShoppingCart, Share2 } from "lucide-react";
+import { ShoppingCart, Share2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import WishlistButton from "@/components/WishlistButton";
 
 interface ProductInfoProps {
@@ -28,14 +29,68 @@ export default function ProductInfo({
   sku,
   category,
 }: ProductInfoProps) {
+  const router = useRouter();
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
-  const handleAddToCart = () => {
-    console.log(`Added ${quantity} x ${name} to cart`);
+  const handleAddToCart = async () => {
+    setIsAddingToCart(true);
+    try {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          quantity,
+        }),
+      });
+
+      if (response.ok) {
+        setAddedToCart(true);
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+
+        // Reset "added" state after 2 seconds
+        setTimeout(() => {
+          setAddedToCart(false);
+        }, 2000);
+      } else {
+        const data = await response.json();
+        alert(data.error || "Fehler beim Hinzufügen zum Warenkorb");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Ein Fehler ist aufgetreten");
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
-  const handleBuyNow = () => {
-    console.log(`Buying ${quantity} x ${name}`);
+  const handleBuyNow = async () => {
+    setIsAddingToCart(true);
+    try {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId,
+          quantity,
+        }),
+      });
+
+      if (response.ok) {
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+        router.push("/checkout");
+      } else {
+        const data = await response.json();
+        alert(data.error || "Fehler beim Hinzufügen zum Warenkorb");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Ein Fehler ist aufgetreten");
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   return (
@@ -136,11 +191,20 @@ export default function ProductInfo({
         <div className="flex gap-3">
           <Button
             onClick={handleAddToCart}
-            disabled={!inStock}
+            disabled={!inStock || isAddingToCart}
             className="flex-1 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-gray-900 h-12 text-base font-semibold"
           >
-            <ShoppingCart className="w-5 h-5 mr-2" />
-            In den Warenkorb
+            {addedToCart ? (
+              <>
+                <Check className="w-5 h-5 mr-2" />
+                Hinzugefügt!
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="w-5 h-5 mr-2" />
+                {isAddingToCart ? "Wird hinzugefügt..." : "In den Warenkorb"}
+              </>
+            )}
           </Button>
           <WishlistButton productId={productId} variant="button" />
           <Button variant="outline" className="px-6 h-12">
@@ -151,11 +215,11 @@ export default function ProductInfo({
         {/* Buy Now Button */}
         <Button
           onClick={handleBuyNow}
-          disabled={!inStock}
+          disabled={!inStock || isAddingToCart}
           variant="outline"
           className="w-full h-12 text-base font-semibold"
         >
-          Jetzt kaufen
+          {isAddingToCart ? "Wird geladen..." : "Jetzt kaufen"}
         </Button>
       </div>
 
