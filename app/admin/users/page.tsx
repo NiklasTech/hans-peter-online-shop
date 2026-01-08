@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Admin Products List Page
- * Route: /admin/products
+ * Admin Users List Page
+ * Route: /admin/users
  *
- * Displays all products with options to view, edit, and delete
+ * Displays all users with options to view, edit, delete and login as user
  */
 
 import { useState, useEffect } from "react";
@@ -29,48 +29,45 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Search, MoreHorizontal, Edit, Trash2, LogIn } from "lucide-react";
 
-// Extended Product type with relations
-interface ProductWithRelations {
+// User type
+interface User {
   id: number;
+  email: string;
   name: string;
-  description?: string | null;
-  price: number;
-  previewImage?: string | null;
-  stock: number;
-  brandId: number;
+  isAdmin: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;
-  images?: Array<{ id: number; url: string; index: number }>;
-  details?: Array<{ id: number; key: string; value: string }>;
-  categories?: Array<{ categoryId: number; category?: { name: string } }>;
-  brand?: { id: number; name: string };
+  defaultAddressId?: number | null;
+  defaultSupplier?: string | null;
+  defaultPayment?: string | null;
 }
 
-export default function ProductsListPage() {
+export default function UsersListPage() {
   const router = useRouter();
-  const [products, setProducts] = useState<ProductWithRelations[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [loginLoading, setLoginLoading] = useState<number | null>(null);
 
-  // Load products
+  // Load users
   useEffect(() => {
-    loadProducts();
+    loadUsers();
   }, []);
 
-  const loadProducts = async () => {
+  const loadUsers = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/admin/product");
+      const response = await fetch("/api/admin/users");
       if (!response.ok) {
-        throw new Error("Fehler beim Laden der Produkte");
+        throw new Error("Fehler beim Laden der Benutzer");
       }
       const data = await response.json();
-      setProducts(data.products || []);
+      setUsers(data.users || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ein Fehler ist aufgetreten");
     } finally {
@@ -78,54 +75,81 @@ export default function ProductsListPage() {
     }
   };
 
-  // Delete product
-  const handleDelete = async (productId: number) => {
-    if (deleteConfirm !== productId) {
-      setDeleteConfirm(productId);
+  // Delete user
+  const handleDelete = async (userId: number) => {
+    if (deleteConfirm !== userId) {
+      setDeleteConfirm(userId);
       setTimeout(() => setDeleteConfirm(null), 3000);
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/product?id=${productId}`, {
+      const response = await fetch(`/api/admin/users?id=${userId}`, {
         method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error("Fehler beim Löschen des Produkts");
+        throw new Error("Fehler beim Löschen des Benutzers");
       }
 
-      // Remove product from list
-      setProducts((prev) => prev.filter((p) => p.id !== productId));
+      // Remove user from list
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
       setDeleteConfirm(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Fehler beim Löschen");
     }
   };
 
-  // Filter products by search query
-  const filteredProducts = products.filter((product) => {
+  // Login as user
+  const handleLoginAsUser = async (userId: number) => {
+    setLoginLoading(userId);
+    try {
+      const response = await fetch("/api/admin/users/login-as", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Fehler beim Anmelden als Benutzer");
+      }
+
+      // Redirect to home page after successful login
+      window.location.href = "/";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Fehler beim Anmelden");
+      setLoginLoading(null);
+    }
+  };
+
+  // Filter users by search query
+  const filteredUsers = users.filter((user) => {
     const query = searchQuery.toLowerCase();
     return (
-      product.name.toLowerCase().includes(query) ||
-      product.description?.toLowerCase().includes(query) ||
-      product.brand?.name.toLowerCase().includes(query)
+      user.name.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query) ||
+      user.id.toString().includes(query)
     );
   });
 
-  // Format price
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("de-DE", {
-      style: "currency",
-      currency: "EUR",
-    }).format(price);
+  // Format date
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("de-DE", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   if (loading) {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-gray-600">Lädt Produkte...</div>
+          <div className="text-lg text-gray-600">Lädt Benutzer...</div>
         </div>
       </div>
     );
@@ -136,14 +160,14 @@ export default function ProductsListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Produkte Verwaltung</h1>
+          <h1 className="text-3xl font-bold">Benutzer Verwaltung</h1>
           <p className="text-gray-600 mt-1">
-            {filteredProducts.length} von {products.length} Produkten
+            {filteredUsers.length} von {users.length} Benutzern
           </p>
         </div>
-        <Button className="cursor-pointer" onClick={() => router.push("/admin/product")}>
+        <Button className="cursor-pointer" onClick={() => router.push("/admin/user")}>
           <Plus className="h-4 w-4 mr-2" />
-          Neues Produkt
+          Neuer Benutzer
         </Button>
       </div>
 
@@ -164,7 +188,7 @@ export default function ProductsListPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Produkte durchsuchen..."
+                placeholder="Benutzer durchsuchen..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -174,75 +198,56 @@ export default function ProductsListPage() {
         </CardContent>
       </Card>
 
-      {/* Products Table */}
+      {/* Users Table */}
       <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[80px]">ID</TableHead>
-                <TableHead>Bild</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Marke</TableHead>
-                <TableHead>Preis</TableHead>
-                <TableHead>Lagerbestand</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>E-Mail</TableHead>
+                <TableHead>Rolle</TableHead>
+                <TableHead>Standard Lieferant</TableHead>
+                <TableHead>Standard Zahlung</TableHead>
+                <TableHead>Erstellt am</TableHead>
                 <TableHead className="text-right">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProducts.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     {searchQuery
-                      ? "Keine Produkte gefunden"
-                      : "Noch keine Produkte vorhanden"}
+                      ? "Keine Benutzer gefunden"
+                      : "Noch keine Benutzer vorhanden"}
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/admin/product/${product.id}`)}>#{product.id}</TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => router.push(`/admin/product/${product.id}`)}>
-                      <div className="w-12 h-12 rounded overflow-hidden bg-gray-100">
-                        {product.previewImage || product.images?.[0]?.url ? (
-                          <img
-                            src={product.previewImage || product.images?.[0]?.url}
-                            alt={product.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <Eye className="h-6 w-6" />
-                          </div>
-                        )}
-                      </div>
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/admin/user/${user.id}`)}>
+                      #{user.id}
                     </TableCell>
-                    <TableCell className="cursor-pointer" onClick={() => router.push(`/admin/product/${product.id}`)}>
-                      <div className="font-medium">{product.name}</div>
-                      {product.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {product.description}
-                        </div>
-                      )}
+                    <TableCell className="cursor-pointer" onClick={() => router.push(`/admin/user/${user.id}`)}>
+                      <div className="font-medium">{user.name}</div>
                     </TableCell>
-                    <TableCell>{product.brand?.name || "—"}</TableCell>
-                    <TableCell className="font-medium">
-                      {formatPrice(product.price)}
+                    <TableCell className="cursor-pointer" onClick={() => router.push(`/admin/user/${user.id}`)}>
+                      {user.email}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={product.stock > 0 ? "default" : "destructive"}
-                      >
-                        {product.stock} Stück
+                      <Badge variant={user.isAdmin ? "default" : "secondary"}>
+                        {user.isAdmin ? "Admin" : "Benutzer"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={product.stock > 0 ? "default" : "secondary"}
-                      >
-                        {product.stock > 0 ? "Verfügbar" : "Ausverkauft"}
-                      </Badge>
+                      {user.defaultSupplier || "—"}
+                    </TableCell>
+                    <TableCell>
+                      {user.defaultPayment || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm text-gray-500">
+                      {formatDate(user.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -255,7 +260,15 @@ export default function ProductsListPage() {
                           <DropdownMenuLabel>Aktionen</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() => router.push(`/admin/product/${product.id}`)}
+                            onClick={() => handleLoginAsUser(user.id)}
+                            className="cursor-pointer"
+                            disabled={loginLoading === user.id}
+                          >
+                            <LogIn className="h-4 w-4 mr-2" />
+                            {loginLoading === user.id ? "Anmelden..." : "Als Benutzer anmelden"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => router.push(`/admin/user/${user.id}`)}
                             className="cursor-pointer"
                           >
                             <Edit className="h-4 w-4 mr-2" />
@@ -265,11 +278,11 @@ export default function ProductsListPage() {
                             className="text-red-600 cursor-pointer"
                             onSelect={(e) => {
                               e.preventDefault();
-                              handleDelete(product.id);
+                              handleDelete(user.id);
                             }}
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
-                            {deleteConfirm === product.id
+                            {deleteConfirm === user.id
                               ? "Wirklich?"
                               : "Löschen"}
                           </DropdownMenuItem>
@@ -286,3 +299,4 @@ export default function ProductsListPage() {
     </div>
   );
 }
+
