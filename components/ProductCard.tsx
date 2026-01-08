@@ -2,6 +2,7 @@
 
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import WishlistButton from "@/components/WishlistButton";
 
 interface ProductCardProps {
@@ -19,13 +20,23 @@ export default function ProductCard({
   image,
   rating = 5,
 }: ProductCardProps) {
+  const [cacheBustedImage, setCacheBustedImage] = useState<string | undefined>(image);
+
+  // Add cache buster only on client-side after hydration
+  useEffect(() => {
+    if (image && !image.startsWith('data:') && !image.startsWith('blob:')) {
+      const separator = image.includes('?') ? '&' : '?';
+      setCacheBustedImage(`${image}${separator}v=${Date.now()}`);
+    }
+  }, [image]);
+
   return (
     <Link href={`/product/${id}`} className="group cursor-pointer block">
       {/* Image Container */}
       <div className="relative bg-gray-200 dark:bg-slate-800 rounded-2xl overflow-hidden aspect-square mb-4 flex items-center justify-center">
-        {image ? (
+        {cacheBustedImage ? (
           <img
-            src={image}
+            src={cacheBustedImage}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

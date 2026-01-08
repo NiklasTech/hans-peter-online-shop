@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -20,8 +20,24 @@ export default function ImageCarousel({
   productName,
 }: ImageCarouselProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [cacheBustedImages, setCacheBustedImages] = useState<string[]>(images);
 
-  const displayImages = images.length > 0 ? images : ["/placeholder.jpg"];
+  // Add cache buster only on client-side after hydration
+  useEffect(() => {
+    if (images.length > 0) {
+      const timestamp = Date.now();
+      const busted = images.map(img => {
+        if (!img || img.startsWith('data:') || img.startsWith('blob:')) {
+          return img;
+        }
+        const separator = img.includes('?') ? '&' : '?';
+        return `${img}${separator}v=${timestamp}`;
+      });
+      setCacheBustedImages(busted);
+    }
+  }, [images]);
+
+  const displayImages = cacheBustedImages.length > 0 ? cacheBustedImages : ["/placeholder.jpg"];
 
   return (
     <div className="space-y-4">

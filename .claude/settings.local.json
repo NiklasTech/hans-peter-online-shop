@@ -25,7 +25,14 @@
       "Bash(npm uninstall:*)",
       "Bash(npx tsx:*)",
       "Bash(where:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Bash(dir:*)",
+      "Bash(docker exec:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma db execute:*)",
+      "Bash(else echo \"Not found at /opt/public/productImages\")",
+      "Bash(fi)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

@@ -75,19 +75,28 @@ async function restoreDatabase() {
 
     // Importiere Backup
     console.log('📥 Importiere Backup...');
-    const backupContent = fs.readFileSync(backupFile, 'utf-8');
+    console.log('   Dies kann einige Minuten dauern...');
 
-    // Schreibe Backup in temporäre Datei im Container
+    // Kopiere Backup in Container
     const tempFile = `/tmp/restore-${Date.now()}.sql`;
-    await execAsync(`docker exec -i ${postgresContainer.trim()} bash -c "cat > ${tempFile}"`, {
-      input: backupContent
-    });
+    await execAsync(`docker cp "${backupFile}" ${postgresContainer.trim()}:${tempFile}`);
+    console.log('   ✓ Backup in Container kopiert');
 
     // Führe Backup aus
-    await execAsync(`docker exec ${postgresContainer.trim()} psql -U ${username} -d ${database} -f ${tempFile}`);
+    console.log('   ⏳ Führe SQL-Befehle aus...');
+    const { stdout, stderr } = await execAsync(
+      `docker exec ${postgresContainer.trim()} psql -U ${username} -d ${database} -f ${tempFile}`,
+      { maxBuffer: 50 * 1024 * 1024 } // 50MB Buffer
+    );
+
+    if (stderr && !stderr.includes('NOTICE')) {
+      console.log('   ⚠️  Warnungen:', stderr);
+    }
+    console.log('   ✓ SQL-Befehle ausgeführt');
 
     // Lösche temporäre Datei
     await execAsync(`docker exec ${postgresContainer.trim()} rm ${tempFile}`);
+    console.log('   ✓ Temporäre Dateien bereinigt');
 
     console.log('\n✅ Datenbank erfolgreich wiederhergestellt!');
     console.log(`📁 Von: ${backupFile}\n`);
