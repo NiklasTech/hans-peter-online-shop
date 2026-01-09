@@ -32,7 +32,9 @@
       "Bash(npx prisma db execute:*)",
       "Bash(else echo \"Not found at /opt/public/productImages\")",
       "Bash(fi)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx shadcn@latest:*)"
     ],
     "deny": [],
     "ask": []
