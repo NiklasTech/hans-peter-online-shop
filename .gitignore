@@ -57,9 +57,10 @@ docker-volumes/
 # Lokale Produktbilder nicht committen
 productImages/
 
-# Database backups
-/backups/
-*.sql
+# Database backups (ignore all except seed data)
+/backups/*
+!backups/.gitkeep
+!backups/seed-data.sql
 
 # Temp test files
 test-products.ts
