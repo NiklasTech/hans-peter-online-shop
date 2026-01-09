@@ -7,6 +7,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export default function ImageCarousel({
   productName,
 }: ImageCarouselProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [api, setApi] = useState<CarouselApi>();
   const [cacheBustedImages, setCacheBustedImages] = useState<string[]>(images);
 
   // Add cache buster only on client-side after hydration
@@ -37,6 +39,22 @@ export default function ImageCarousel({
     }
   }, [images]);
 
+  // Update selected index when carousel slides
+  useEffect(() => {
+    if (!api) return;
+
+    const onSelect = () => {
+      setSelectedIndex(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+    onSelect();
+
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+
   const displayImages =
     cacheBustedImages.length > 0 ? cacheBustedImages : ["/placeholder.jpg"];
 
@@ -44,7 +62,7 @@ export default function ImageCarousel({
     <div className="space-y-4">
       {/* Main Carousel */}
       <div className="relative bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden aspect-square">
-        <Carousel className="w-full h-full">
+        <Carousel setApi={setApi} className="w-full h-full">
           <CarouselContent className="h-full ml-0">
             {displayImages.map((image, index) => (
               <CarouselItem
@@ -77,7 +95,10 @@ export default function ImageCarousel({
           {displayImages.map((image, index) => (
             <button
               key={index}
-              onClick={() => setSelectedIndex(index)}
+              onClick={() => {
+                setSelectedIndex(index);
+                api?.scrollTo(index);
+              }}
               className={cn(
                 "flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all",
                 selectedIndex === index
