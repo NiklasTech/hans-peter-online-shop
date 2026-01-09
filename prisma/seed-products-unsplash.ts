@@ -174,11 +174,12 @@ const PRODUCT_BRAND_MAPPING: Record<string, string[]> = {
   'Mainboard': ['ASUS', 'MSI'],
 
   // Mode
+  'Sneaker': ['Nike', 'Adidas', 'Puma'],
   'T-Shirt': ['Nike', 'Adidas', 'Puma', 'H&M', 'Zara', 'Tommy Hilfiger', 'Calvin Klein'],
   'Hemd': ['H&M', 'Zara', 'Tommy Hilfiger', 'Calvin Klein'],
   'Jeans': ['Levis', 'H&M', 'Zara', 'Tommy Hilfiger', 'Calvin Klein'],
   'Jacke': ['Nike', 'Adidas', 'Puma', 'H&M', 'Zara', 'Tommy Hilfiger'],
-  'Sneaker': ['Nike', 'Adidas', 'Puma'],
+  'Gürtel': ['Levis', 'Tommy Hilfiger', 'Calvin Klein', 'H&M'],
   'Stiefel': ['Nike', 'Adidas', 'Tommy Hilfiger'],
   'Tasche': ['Nike', 'Adidas', 'Puma', 'Tommy Hilfiger', 'Calvin Klein'],
   'Rucksack': ['Nike', 'Adidas', 'Puma'],
@@ -227,6 +228,7 @@ const PRODUCT_BRAND_MAPPING: Record<string, string[]> = {
   'Gesichtscreme': ['L\'Oréal', 'Nivea', 'Neutrogena', 'Garnier'],
   'Parfüm': ['L\'Oréal', 'Calvin Klein'],
   'Lippenstift': ['L\'Oréal', 'Maybelline'],
+  'Mascara': ['Maybelline', 'L\'Oréal'],
 
   // Lebensmittel
   'Kaffee': ['Nestlé', 'Jacobs', 'Edeka'],
@@ -250,6 +252,11 @@ function generateProductDescription(template: { name: string }, productName: str
       `Hochleistungs-Prozessor der neuesten Generation. Perfekt für Gaming, Content Creation und Multitasking. Übertaktbar für noch mehr Performance.`,
       `Moderne CPU mit beeindruckender Single- und Multi-Core-Performance. Ideal für anspruchsvolle Anwendungen und flüssiges Gaming bei hohen FPS.`,
       `Leistungsstarker Prozessor für Enthusiasten. Optimiert für Gaming und produktive Workloads. Hervorragende Energieeffizienz bei maximaler Leistung.`,
+    ],
+    'Mainboard': [
+      `Premium Mainboard für anspruchsvolle PC-Builds. Modernste Chipsatz-Technologie und umfangreiche Erweiterungsmöglichkeiten. Perfekt für Gaming und Workstations.`,
+      `High-End Motherboard mit exzellenter Stromversorgung. Unterstützt die neuesten Prozessoren und RAM-Standards. Ideal für Übertakter und Enthusiasten.`,
+      `Robustes Mainboard mit erstklassiger Ausstattung. Zuverlässige Performance und vielfältige Anschlussmöglichkeiten. Für maximale Kompatibilität und Zukunftssicherheit.`,
     ],
     'Laptop': [
       `Premium Laptop für professionelle Anwender. Schlankes Design trifft auf kraftvolle Hardware. Perfekt für unterwegs und im Büro. Lange Akkulaufzeit garantiert.`,
@@ -281,6 +288,11 @@ function generateProductDescription(template: { name: string }, productName: str
       `Premium Denim mit authentischem Look. Robuster Stoff und komfortable Passform. Vielseitig kombinierbar für jeden Anlass.`,
       `Stilvolle Jeans mit modernem Schnitt. Nachhaltig produziert und langlebig. Perfekter Sitz garantiert.`,
     ],
+    'Gürtel': [
+      `Eleganter Gürtel aus hochwertigem Material. Zeitloses Design für Business und Freizeit. Robuste Verarbeitung und komfortabler Tragekomfort.`,
+      `Premium Ledergürtel mit stilvoller Schnalle. Passt perfekt zu Jeans, Chinos und Anzughosen. Ein unverzichtbares Accessoire für jeden Mann.`,
+      `Klassischer Gürtel in erstklassiger Qualität. Langlebig und vielseitig kombinierbar. Perfekter Abschluss für jedes Outfit.`,
+    ],
     'Kaffeemaschine': [
       `Hochwertige Kaffeemaschine für perfekten Kaffeegenuss. Einfache Bedienung und konsistente Ergebnisse. Ideal für den täglichen Gebrauch.`,
       `Premium Kaffeevollautomat mit Barista-Qualität. Individuell einstellbar für jeden Geschmack. Perfekter Espresso auf Knopfdruck.`,
@@ -306,6 +318,11 @@ function generateProductDescription(template: { name: string }, productName: str
       `Premium Haarpflege mit wirksamen Inhaltsstoffen. Stärkt das Haar von der Wurzel bis zur Spitze. Für sichtbar schöneres Haar.`,
       `Professionelles Shampoo für Salon-Ergebnisse zuhause. Optimale Pflege und Glanz. Dermatologisch getestet.`,
     ],
+    'Mascara': [
+      `Professionelle Mascara für atemberaubende Wimpern. Intensive Farbe und dramatisches Volumen. Hält den ganzen Tag ohne zu verschmieren.`,
+      `Premium Wimperntusche für perfekte Definition. Verlängert und verdichtet die Wimpern. Einfach aufzutragen und leicht zu entfernen.`,
+      `Hochwertige Mascara mit innovativer Bürstenform. Erreicht jede Wimper für einen glamourösen Augenaufschlag. Langanhaltend und wischfest.`,
+    ],
   };
 
   const categoryDescriptions = descriptions[template.name] || [
@@ -324,6 +341,16 @@ function generateReview(template: { name: string }, productName: string, brandNa
       { rating: 5, title: 'Absolute Gaming-Maschine!', comment: 'Die Karte läuft selbst bei 4K ultra Settings butterweich. Keine FPS-Drops mehr, selbst bei Cyberpunk. Würde ich sofort wieder kaufen!' },
       { rating: 5, title: 'Top Performance', comment: 'Perfekt für mein Setup. Temperatur bleibt auch unter Last cool. RGB sieht super aus. Lieferung war schnell.' },
       { rating: 4, title: 'Sehr gut, aber laut', comment: 'Performance ist top, keine Frage. Allerdings wird die Karte unter Last schon ziemlich laut. Ansonsten bin ich sehr zufrieden.' },
+    ],
+    'Prozessor': [
+      { rating: 5, title: 'Unglaubliche Performance!', comment: 'CPU ist ein Beast! Spiele laufen butterweich, auch beim Streaming keine Probleme. Top für Gaming und Arbeit!' },
+      { rating: 5, title: 'Super CPU', comment: 'Sehr schnell, übertaktet sich super. Temperatur bleibt im grünen Bereich. Definitiv empfehlenswert!' },
+      { rating: 4, title: 'Sehr gut', comment: 'Starke Performance für den Preis. Einbau war easy. Hätte mir mehr Kerne gewünscht, aber passt.' },
+    ],
+    'Mainboard': [
+      { rating: 5, title: 'Solides Board!', comment: 'BIOS ist super, viele Einstellungsmöglichkeiten. Alle Anschlüsse die ich brauche. Läuft stabil seit Monaten!' },
+      { rating: 5, title: 'Top Qualität', comment: 'Verarbeitung ist erstklassig. RGB-Beleuchtung sieht mega aus. Perfekte Basis für meinen Gaming-PC!' },
+      { rating: 4, title: 'Gutes Mainboard', comment: 'Macht alles was es soll. Preis ist fair. Könnte mehr USB-Anschlüsse haben, aber sonst perfekt.' },
     ],
     'Smartphone': [
       { rating: 5, title: 'Bestes Handy bisher!', comment: 'Kamera ist der Wahnsinn! Display absolut brillant, Akku hält locker den ganzen Tag. Bin begeistert!' },
@@ -349,6 +376,16 @@ function generateReview(template: { name: string }, productName: string, brandNa
       { rating: 5, title: 'Unglaublich lecker!', comment: 'Schmeckt einfach himmlisch! Nicht zu süß, perfekte Balance. Kann nicht aufhören zu naschen!' },
       { rating: 5, title: 'Beste Schokolade!', comment: 'Qualität ist spitze, schmilzt auf der Zunge. Perfekt zum Verschenken oder selbst genießen!' },
       { rating: 4, title: 'Sehr gut', comment: 'Leckere Schokolade mit tollem Aroma. Preis ist angemessen für die Qualität.' },
+    ],
+    'Gürtel': [
+      { rating: 5, title: 'Super Qualität!', comment: 'Leder fühlt sich hochwertig an. Schnalle ist robust und sieht edel aus. Passt perfekt!' },
+      { rating: 5, title: 'Top Gürtel', comment: 'Sitzt perfekt, Verarbeitung ist erstklassig. Kann man zu allem tragen. Sehr zufrieden!' },
+      { rating: 4, title: 'Guter Kauf', comment: 'Schöner Gürtel für den Preis. Material ist gut, könnte etwas weicher sein.' },
+    ],
+    'Mascara': [
+      { rating: 5, title: 'Beste Mascara ever!', comment: 'Wimpern sehen mega lang aus! Hält den ganzen Tag ohne zu krümeln. Absolute Kaufempfehlung!' },
+      { rating: 5, title: 'Super Ergebnis', comment: 'Gibt tolles Volumen und Länge. Lässt sich leicht auftragen und gut entfernen. Top!' },
+      { rating: 4, title: 'Sehr gut', comment: 'Wimpern werden schön definiert. Preis ist okay. Würde ich wieder kaufen.' },
     ],
   };
 
@@ -438,6 +475,12 @@ function generateProductDetails(template: { name: string }, productName: string,
       { key: 'Größen', value: 'W28-W40' },
       { key: 'Waschung', value: faker.helpers.arrayElement(['Dark Wash', 'Light Wash', 'Vintage', 'Black']) },
     ],
+    'Gürtel': [
+      { key: 'Material', value: faker.helpers.arrayElement(['Echtleder', 'Kunstleder', 'Canvas']) },
+      { key: 'Breite', value: faker.helpers.arrayElement(['3 cm', '3.5 cm', '4 cm']) },
+      { key: 'Länge', value: faker.helpers.arrayElement(['95 cm', '105 cm', '115 cm']) },
+      { key: 'Farbe', value: faker.helpers.arrayElement(['Schwarz', 'Braun', 'Cognac', 'Dunkelblau']) },
+    ],
     'Kaffeemaschine': [
       { key: 'Typ', value: faker.helpers.arrayElement(['Kapselmaschine', 'Vollautom at', 'Filtermaschine']) },
       { key: 'Fassungsvermögen', value: faker.helpers.arrayElement(['1.2 L', '1.5 L', '1.8 L']) },
@@ -519,6 +562,12 @@ function generateProductDetails(template: { name: string }, productName: string,
       { key: 'Silikonfrei', value: faker.helpers.arrayElement(['Ja', 'Nein']) },
       { key: 'pH-Wert', value: faker.helpers.arrayElement(['5.5', '6.0', '6.5']) },
     ],
+    'Mascara': [
+      { key: 'Typ', value: faker.helpers.arrayElement(['Volumen', 'Länge', 'Definition', 'Wasserfest']) },
+      { key: 'Haltbarkeit', value: faker.helpers.arrayElement(['Bis zu 12h', 'Bis zu 24h']) },
+      { key: 'Farbe', value: faker.helpers.arrayElement(['Schwarz', 'Braun', 'Blau-Schwarz']) },
+      { key: 'Vegan', value: faker.helpers.arrayElement(['Ja', 'Nein']) },
+    ],
     'Puzzle': [
       { key: 'Teile', value: faker.helpers.arrayElement(['500', '1000', '1500', '2000']) },
       { key: 'Größe', value: faker.helpers.arrayElement(['50x70 cm', '70x50 cm', '98x75 cm']) },
@@ -541,104 +590,181 @@ function generateProductDetails(template: { name: string }, productName: string,
 // Produktvorlagen nach Kategorie mit Suchbegriffen
 const PRODUCT_TEMPLATES: Record<string, { name: string; keywords: string[] }[]> = {
   Elektronik: [
-    { name: 'Laptop', keywords: ['laptop', 'computer', 'notebook'] },
-    { name: 'Smartphone', keywords: ['smartphone', 'phone', 'mobile'] },
-    { name: 'Tablet', keywords: ['tablet', 'ipad'] },
-    { name: 'Monitor', keywords: ['monitor', 'screen', 'display'] },
-    { name: 'Tastatur', keywords: ['keyboard', 'typing'] },
-    { name: 'Maus', keywords: ['mouse', 'computer mouse'] },
-    { name: 'Headset', keywords: ['headphones', 'headset', 'audio'] },
-    { name: 'Webcam', keywords: ['webcam', 'camera'] },
-    { name: 'Drucker', keywords: ['printer', 'office'] },
-    { name: 'Router', keywords: ['router', 'wifi', 'network'] },
+    { name: 'Grafikkarte', keywords: ['graphics card gpu', 'nvidia card', 'gaming gpu'] },
+    { name: 'Prozessor', keywords: ['computer processor cpu', 'intel chip', 'amd ryzen'] },
+    { name: 'Mainboard', keywords: ['motherboard pcb', 'computer board', 'pc motherboard'] },
+    { name: 'Laptop', keywords: ['laptop computer', 'notebook pc', 'macbook'] },
+    { name: 'Smartphone', keywords: ['smartphone screen', 'mobile phone', 'iphone'] },
+    { name: 'Tablet', keywords: ['tablet device', 'ipad screen', 'digital tablet'] },
+    { name: 'Monitor', keywords: ['computer monitor', 'display screen', 'gaming monitor'] },
+    { name: 'Tastatur', keywords: ['mechanical keyboard', 'gaming keyboard', 'computer keyboard'] },
+    { name: 'Maus', keywords: ['gaming mouse', 'computer mouse', 'wireless mouse'] },
+    { name: 'Headset', keywords: ['gaming headphones', 'wireless headphones', 'headset'] },
+    { name: 'Webcam', keywords: ['webcam', 'video camera', 'streaming camera'] },
+    { name: 'Drucker', keywords: ['printer machine', 'office printer', 'inkjet printer'] },
+    { name: 'Router', keywords: ['wifi router', 'network router', 'wireless router'] },
   ],
   Mode: [
-    { name: 'T-Shirt', keywords: ['tshirt', 'clothing', 'fashion'] },
-    { name: 'Hemd', keywords: ['shirt', 'dress shirt'] },
-    { name: 'Jeans', keywords: ['jeans', 'denim', 'pants'] },
-    { name: 'Jacke', keywords: ['jacket', 'coat'] },
-    { name: 'Sneaker', keywords: ['sneakers', 'shoes', 'footwear'] },
-    { name: 'Stiefel', keywords: ['boots', 'shoes'] },
-    { name: 'Tasche', keywords: ['bag', 'handbag', 'purse'] },
-    { name: 'Rucksack', keywords: ['backpack', 'bag'] },
+    { name: 'Sneaker', keywords: ['white sneakers', 'sport shoes', 'running sneakers'] },
+    { name: 'T-Shirt', keywords: ['t-shirt white', 'cotton shirt', 'casual tshirt'] },
+    { name: 'Hemd', keywords: ['dress shirt', 'formal shirt', 'business shirt'] },
+    { name: 'Jeans', keywords: ['blue jeans', 'denim pants', 'jeans trousers'] },
+    { name: 'Jacke', keywords: ['winter jacket', 'outdoor jacket', 'sports jacket'] },
+    { name: 'Gürtel', keywords: ['leather belt', 'fashion belt', 'mens belt'] },
+    { name: 'Stiefel', keywords: ['leather boots', 'winter boots', 'fashion boots'] },
+    { name: 'Tasche', keywords: ['leather bag', 'handbag fashion', 'designer bag'] },
+    { name: 'Rucksack', keywords: ['travel backpack', 'school backpack', 'hiking backpack'] },
   ],
   Haushalt: [
-    { name: 'Kaffeemaschine', keywords: ['coffee machine', 'coffee maker'] },
-    { name: 'Wasserkocher', keywords: ['kettle', 'kitchen'] },
-    { name: 'Staubsauger', keywords: ['vacuum cleaner', 'cleaning'] },
-    { name: 'Sofa', keywords: ['sofa', 'couch', 'furniture'] },
-    { name: 'Tisch', keywords: ['table', 'dining table', 'furniture'] },
-    { name: 'Stuhl', keywords: ['chair', 'furniture'] },
-    { name: 'Lampe', keywords: ['lamp', 'light', 'lighting'] },
+    { name: 'Kaffeemaschine', keywords: ['coffee machine', 'espresso maker', 'coffee maker'] },
+    { name: 'Wasserkocher', keywords: ['electric kettle', 'water kettle', 'tea kettle'] },
+    { name: 'Staubsauger', keywords: ['vacuum cleaner', 'robot vacuum', 'hoover'] },
+    { name: 'Sofa', keywords: ['modern sofa', 'living room couch', 'leather sofa'] },
+    { name: 'Tisch', keywords: ['wooden table', 'dining table', 'modern desk'] },
+    { name: 'Stuhl', keywords: ['office chair', 'dining chair', 'modern chair'] },
+    { name: 'Lampe', keywords: ['table lamp', 'floor lamp', 'modern light'] },
   ],
   Sport: [
-    { name: 'Laufschuhe', keywords: ['running shoes', 'sneakers', 'sports'] },
-    { name: 'Yogamatte', keywords: ['yoga mat', 'exercise', 'fitness'] },
-    { name: 'Hanteln', keywords: ['dumbbells', 'weights', 'fitness'] },
-    { name: 'Basketball', keywords: ['basketball', 'sports', 'ball'] },
-    { name: 'Fußball', keywords: ['soccer ball', 'football', 'sports'] },
-    { name: 'Fahrrad', keywords: ['bicycle', 'bike', 'cycling'] },
+    { name: 'Laufschuhe', keywords: ['running shoes', 'sport sneakers', 'athletic shoes'] },
+    { name: 'Yogamatte', keywords: ['yoga mat', 'exercise mat', 'fitness mat'] },
+    { name: 'Hanteln', keywords: ['dumbbells weights', 'gym equipment', 'fitness dumbbells'] },
+    { name: 'Basketball', keywords: ['basketball ball', 'orange basketball', 'sport ball'] },
+    { name: 'Fußball', keywords: ['soccer ball', 'football', 'sport ball'] },
+    { name: 'Fahrrad', keywords: ['bicycle', 'mountain bike', 'road bike'] },
   ],
   Bücher: [
-    { name: 'Roman', keywords: ['book', 'novel', 'reading'] },
-    { name: 'Krimi', keywords: ['book', 'thriller', 'reading'] },
-    { name: 'Kochbuch', keywords: ['cookbook', 'recipe book'] },
+    { name: 'Roman', keywords: ['novel book', 'reading book', 'paperback'] },
+    { name: 'Krimi', keywords: ['thriller book', 'mystery novel', 'crime book'] },
+    { name: 'Kochbuch', keywords: ['cookbook', 'recipe book', 'cooking book'] },
   ],
   Spielzeug: [
-    { name: 'Puzzle', keywords: ['puzzle', 'jigsaw'] },
-    { name: 'Brettspiel', keywords: ['board game', 'game'] },
-    { name: 'Bauklötze', keywords: ['building blocks', 'lego', 'toys'] },
-    { name: 'Kuscheltier', keywords: ['teddy bear', 'plush toy'] },
+    { name: 'Puzzle', keywords: ['jigsaw puzzle', 'puzzle pieces', 'puzzle game'] },
+    { name: 'Brettspiel', keywords: ['board game', 'family game', 'tabletop game'] },
+    { name: 'Bauklötze', keywords: ['lego blocks', 'building blocks', 'toy blocks'] },
+    { name: 'Kuscheltier', keywords: ['teddy bear', 'plush toy', 'stuffed animal'] },
   ],
   Garten: [
-    { name: 'Rasenmäher', keywords: ['lawn mower', 'garden', 'grass'] },
-    { name: 'Gartenschere', keywords: ['pruning shears', 'garden tools'] },
-    { name: 'Blumentopf', keywords: ['flower pot', 'plant pot'] },
-    { name: 'Gartenmöbel', keywords: ['garden furniture', 'outdoor furniture'] },
+    { name: 'Rasenmäher', keywords: ['lawn mower', 'grass cutter', 'garden mower'] },
+    { name: 'Gartenschere', keywords: ['pruning shears', 'garden scissors', 'plant cutter'] },
+    { name: 'Blumentopf', keywords: ['flower pot', 'plant pot', 'ceramic pot'] },
+    { name: 'Gartenmöbel', keywords: ['garden furniture', 'outdoor table', 'patio furniture'] },
   ],
   Automobile: [
-    { name: 'Motoröl', keywords: ['motor oil', 'car', 'automotive'] },
-    { name: 'Werkzeugset', keywords: ['tool set', 'tools', 'wrench'] },
-    { name: 'Dashcam', keywords: ['dashcam', 'car camera'] },
+    { name: 'Motoröl', keywords: ['motor oil bottle', 'engine oil', 'car oil'] },
+    { name: 'Werkzeugset', keywords: ['tool set', 'mechanic tools', 'wrench set'] },
+    { name: 'Dashcam', keywords: ['dashcam', 'car camera', 'dashboard camera'] },
   ],
   Beauty: [
-    { name: 'Shampoo', keywords: ['shampoo', 'haircare', 'beauty'] },
-    { name: 'Gesichtscreme', keywords: ['face cream', 'skincare', 'beauty'] },
-    { name: 'Parfüm', keywords: ['perfume', 'fragrance', 'beauty'] },
-    { name: 'Lippenstift', keywords: ['lipstick', 'makeup', 'beauty'] },
+    { name: 'Shampoo', keywords: ['shampoo bottle', 'hair care', 'beauty product'] },
+    { name: 'Gesichtscreme', keywords: ['face cream jar', 'skincare product', 'moisturizer'] },
+    { name: 'Parfüm', keywords: ['perfume bottle', 'fragrance', 'cologne bottle'] },
+    { name: 'Lippenstift', keywords: ['lipstick', 'makeup product', 'cosmetic'] },
+    { name: 'Mascara', keywords: ['mascara wand', 'eye makeup', 'lash cosmetic'] },
   ],
   Lebensmittel: [
-    { name: 'Kaffee', keywords: ['coffee', 'beans', 'beverage'] },
-    { name: 'Tee', keywords: ['tea', 'beverage'] },
-    { name: 'Schokolade', keywords: ['chocolate', 'candy', 'sweet'] },
-    { name: 'Olivenöl', keywords: ['olive oil', 'cooking'] },
+    { name: 'Kaffee', keywords: ['coffee beans', 'roasted coffee', 'coffee bag'] },
+    { name: 'Tee', keywords: ['tea leaves', 'tea bag', 'herbal tea'] },
+    { name: 'Schokolade', keywords: ['chocolate bar', 'dark chocolate', 'cocoa'] },
+    { name: 'Olivenöl', keywords: ['olive oil bottle', 'cooking oil', 'extra virgin oil'] },
   ],
 };
 
 // Funktion zum Abrufen eines Pexels-Bildes
-async function getPexelsImage(keywords: string[]): Promise<string> {
+async function getPexelsImage(keywords: string[], productName?: string, brandName?: string): Promise<string> {
   if (!pexels) {
     // Fallback auf Picsum wenn kein API Key vorhanden
     return `https://picsum.photos/seed/${faker.string.alphanumeric(10)}/800/800`;
   }
 
   try {
-    const query = keywords[Math.floor(Math.random() * keywords.length)];
+    // Erstelle eine bessere Suchanfrage basierend auf Produktname und Marke
+    let query = '';
+
+    if (productName && brandName) {
+      // Spezielle Behandlung für bekannte Marken/Produkte
+      const productLower = productName.toLowerCase();
+
+      // Apple Produkte
+      if (brandName === 'Apple') {
+        if (productLower.includes('iphone')) query = 'iphone smartphone';
+        else if (productLower.includes('macbook')) query = 'macbook laptop';
+        else if (productLower.includes('ipad')) query = 'ipad tablet';
+      }
+      // Samsung Produkte
+      else if (brandName === 'Samsung') {
+        if (productLower.includes('galaxy s')) query = 'samsung galaxy smartphone';
+        else if (productLower.includes('galaxy tab')) query = 'samsung tablet';
+      }
+      // NVIDIA/AMD Grafikkarten
+      else if (brandName === 'NVIDIA' || brandName === 'AMD') {
+        query = 'graphics card gpu';
+      }
+      // Intel/AMD Prozessoren
+      else if ((brandName === 'Intel' || brandName === 'AMD') && (productLower.includes('ryzen') || productLower.includes('core'))) {
+        query = 'computer processor cpu';
+      }
+      // Nike/Adidas Schuhe
+      else if ((brandName === 'Nike' || brandName === 'Adidas') && (productLower.includes('air') || productLower.includes('ultra'))) {
+        if (productLower.includes('lauf')) query = 'running shoes';
+        else query = 'sneakers shoes';
+      }
+      // Logitech Peripherie
+      else if (brandName === 'Logitech') {
+        if (productLower.includes('mx')) query = 'computer mouse';
+        else if (productLower.includes('g pro') || productLower.includes('g9')) query = 'gaming keyboard';
+      }
+    }
+
+    // Wenn noch keine spezifische Query, versuche aus Produktnamen zu extrahieren
+    if (!query && productName && brandName) {
+      const productInfo = productName.replace(brandName, '').trim();
+      // Entferne Modellnummern und konzentriere dich auf Produkttyp
+      query = productInfo.replace(/\d+/g, '').trim();
+    }
+
+    // Wenn immer noch keine Query, verwende Keywords
+    if (!query || query.length < 3) {
+      query = keywords[0];
+    }
+
+    console.log(`    🔍 Suche Bild für: "${query}"`);
+
     const result = await pexels.photos.search({
       query,
-      per_page: 30,
+      per_page: 80, // Mehr Ergebnisse für bessere Auswahl
       orientation: 'square',
     });
 
     if ('photos' in result && result.photos.length > 0) {
+      // Wähle ein zufälliges Bild aus den Ergebnissen
       const randomPhoto = faker.helpers.arrayElement(result.photos);
+      console.log(`    ✓ Bild gefunden: ${randomPhoto.photographer}`);
       return randomPhoto.src.large;
+    } else {
+      console.log(`    ⚠️  Keine Bilder für "${query}" gefunden, versuche Fallback...`);
+
+      // Fallback auf ein allgemeineres Keyword
+      if (keywords.length > 1) {
+        const fallbackQuery = keywords[1];
+        const fallbackResult = await pexels.photos.search({
+          query: fallbackQuery,
+          per_page: 80,
+          orientation: 'square',
+        });
+
+        if ('photos' in fallbackResult && fallbackResult.photos.length > 0) {
+          const randomPhoto = faker.helpers.arrayElement(fallbackResult.photos);
+          console.log(`    ✓ Fallback Bild gefunden mit "${fallbackQuery}"`);
+          return randomPhoto.src.large;
+        }
+      }
     }
   } catch (error) {
-    console.error('Pexels API error:', error);
+    console.error('    ❌ Pexels API error:', error);
   }
 
   // Fallback
+  console.log(`    ⚠️  Verwende Placeholder-Bild`);
   return `https://picsum.photos/seed/${faker.string.alphanumeric(10)}/800/800`;
 }
 
@@ -752,18 +878,18 @@ async function main() {
 
         // Bilder mit passenden Keywords abrufen
         const keywords = [...template.keywords, ...category.keywords];
-        const previewImage = await getPexelsImage(keywords);
+        const previewImage = await getPexelsImage(keywords, productName, brandName);
 
         // Kurze Pause um API-Limits zu respektieren (200/Stunde = ~2 Sekunden zwischen Requests)
         if (pexels) await delay(2000);
 
-        const image1 = await getPexelsImage(keywords);
+        const image1 = await getPexelsImage(keywords, productName, brandName);
         if (pexels) await delay(2000);
 
-        const image2 = await getPexelsImage(keywords);
+        const image2 = await getPexelsImage(keywords, productName, brandName);
         if (pexels) await delay(2000);
 
-        const image3 = await getPexelsImage(keywords);
+        const image3 = await getPexelsImage(keywords, productName, brandName);
 
         // Prüfe ob Produkt bereits existiert (basierend auf name + brandId)
         const existingProduct = await prisma.product.findUnique({
