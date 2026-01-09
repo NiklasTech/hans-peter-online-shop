@@ -24,11 +24,12 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
+  NavigationMenuContent,
+  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import {
   Search,
@@ -48,35 +49,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 
-const categories = [
-  {
-    name: "Männer",
-    subcategories: [
-      { name: "T-Shirts", href: "/products/men/tshirts" },
-      { name: "Hemden", href: "/products/men/shirts" },
-      { name: "Hosen", href: "/products/men/pants" },
-      { name: "Schuhe", href: "/products/men/shoes" },
-    ],
-  },
-  {
-    name: "Frauen",
-    subcategories: [
-      { name: "Kleider", href: "/products/women/dresses" },
-      { name: "Tops", href: "/products/women/tops" },
-      { name: "Jeans", href: "/products/women/jeans" },
-      { name: "Schuhe", href: "/products/women/shoes" },
-    ],
-  },
-  {
-    name: "Zubehör",
-    subcategories: [
-      { name: "Taschen", href: "/products/accessories/bags" },
-      { name: "Schmuck", href: "/products/accessories/jewelry" },
-      { name: "Gürtel", href: "/products/accessories/belts" },
-      { name: "Sonstiges", href: "/products/accessories/other" },
-    ],
-  },
-];
+interface Category {
+  id: number;
+  name: string;
+  description?: string | null;
+  image?: string | null;
+}
 
 interface UserData {
   id: number;
@@ -109,6 +87,7 @@ export default function Navbar() {
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
   const [cartItems, setCartItems] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Search states
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,6 +114,23 @@ export default function Navbar() {
   // Check authentication status on mount
   useEffect(() => {
     checkAuthStatus();
+  }, []);
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.categories || []);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
   // Fetch wishlist count
@@ -249,7 +245,10 @@ export default function Navbar() {
   // Close search results when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setShowSearchResults(false);
       }
     };
@@ -379,7 +378,9 @@ export default function Navbar() {
 
   const handleAdminActivate = async () => {
     try {
-      const response = await fetch("/api/admin/auth/activate", { method: "POST" });
+      const response = await fetch("/api/admin/auth/activate", {
+        method: "POST",
+      });
       if (response.ok) {
         // Hard reload to ensure all server components re-render with admin access
         window.location.reload();
@@ -442,35 +443,57 @@ export default function Navbar() {
             {isMounted ? (
               <NavigationMenu className="hidden lg:flex">
                 <NavigationMenuList>
-                  {categories.map((category) => (
-                    <NavigationMenuItem key={category.name}>
-                      <NavigationMenuTrigger className="text-sm font-medium text-gray-900 dark:text-white">
-                        {category.name}
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <div className="grid w-[200px] gap-2 p-4">
-                          {category.subcategories.map((sub) => (
-                            <Link key={sub.href} href={sub.href}>
-                              <NavigationMenuLink asChild>
-                                <span className="block px-3 py-2 text-sm text-gray-900 dark:text-white rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer transition">
-                                  {sub.name}
-                                </span>
-                              </NavigationMenuLink>
-                            </Link>
-                          ))}
-                        </div>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
-                  ))}
+                  {/* Home Link */}
+                  <NavigationMenuItem>
+                    <NavigationMenuLink
+                      href="/"
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      Home
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+
+                  {/* Kategorien Dropdown */}
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger>Kategorien</NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <div className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={`/category/${category.name}`}
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <div className="text-sm font-medium leading-none">
+                              {category.name}
+                            </div>
+                            {category.description && (
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {category.description}
+                              </p>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+
+                  {/* Alle Produkte Link */}
+                  <NavigationMenuItem>
+                    <NavigationMenuLink
+                      href="/products"
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      Alle Produkte
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
                 </NavigationMenuList>
               </NavigationMenu>
             ) : (
               <div className="hidden lg:flex gap-4">
-                {categories.map((category) => (
-                  <span key={category.name} className="text-sm font-medium text-gray-900 dark:text-white px-4 py-2">
-                    {category.name}
-                  </span>
-                ))}
+                <span className="text-sm font-medium text-gray-900 dark:text-white px-4 py-2">
+                  Kategorien laden...
+                </span>
               </div>
             )}
 
@@ -487,7 +510,11 @@ export default function Navbar() {
             </button>
 
             {/* Search Bar */}
-            <form onSubmit={handleSearchSubmit} className="hidden sm:flex flex-1 max-w-md relative" ref={searchRef}>
+            <form
+              onSubmit={handleSearchSubmit}
+              className="hidden sm:flex flex-1 max-w-md relative"
+              ref={searchRef}
+            >
               <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
@@ -642,7 +669,10 @@ export default function Navbar() {
                         <>
                           <div className="max-h-[400px] overflow-y-auto space-y-3">
                             {cartItems.map((item) => (
-                              <div key={item.id} className="flex gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
+                              <div
+                                key={item.id}
+                                className="flex gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800"
+                              >
                                 {/* Product Image */}
                                 <div className="w-16 h-16 rounded bg-gray-100 dark:bg-slate-700 shrink-0 overflow-hidden">
                                   {item.product.previewImage ? (
@@ -688,7 +718,8 @@ export default function Navbar() {
                               <span className="font-semibold">
                                 {formatPrice(
                                   cartItems.reduce(
-                                    (sum, item) => sum + item.product.price * item.quantity,
+                                    (sum, item) =>
+                                      sum + item.product.price * item.quantity,
                                     0
                                   )
                                 )}
@@ -708,15 +739,15 @@ export default function Navbar() {
                       {/* Buttons */}
                       <div className="space-y-2">
                         <Link href="/" className="block">
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                          >
+                          <Button variant="outline" className="w-full">
                             Weiter einkaufen
                           </Button>
                         </Link>
                         <Link href="/checkout" className="block">
-                          <Button className="w-full" disabled={cartItems.length === 0}>
+                          <Button
+                            className="w-full"
+                            disabled={cartItems.length === 0}
+                          >
                             Zur Kasse
                           </Button>
                         </Link>
@@ -743,8 +774,12 @@ export default function Navbar() {
                       <Avatar className="hover:opacity-80 transition">
                         {user ? (
                           <>
-                            <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} />
-                            <AvatarFallback>{getUserInitials(user.name)}</AvatarFallback>
+                            <AvatarImage
+                              src={`https://avatar.vercel.sh/${user.email}`}
+                            />
+                            <AvatarFallback>
+                              {getUserInitials(user.name)}
+                            </AvatarFallback>
                           </>
                         ) : (
                           <AvatarFallback>AG</AvatarFallback>
@@ -764,7 +799,9 @@ export default function Navbar() {
                         <DropdownMenuLabel>
                           <div>
                             <p className="font-medium">{user.name}</p>
-                            <p className="text-xs text-gray-500">{user.email}</p>
+                            <p className="text-xs text-gray-500">
+                              {user.email}
+                            </p>
                           </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
@@ -869,59 +906,31 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile Menu - Accordion Style */}
+      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white dark:bg-slate-950 border-b border-gray-200 dark:border-gray-800">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {selectedCategory ? (
-              <>
-                {/* Back Button */}
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className="flex items-center gap-2 mb-6 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition"
-                >
-                  <span>←</span> Zurück
-                </button>
-
-                {/* Subcategories */}
-                <div>
-                  {categories
-                    .find((cat) => cat.name === selectedCategory)
-                    ?.subcategories.map((sub) => (
-                      <div key={sub.href} className="mb-3">
-                        <Link href={sub.href}>
-                          <div className="px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition">
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                              {sub.name}
-                            </span>
-                          </div>
-                        </Link>
-                      </div>
-                    ))}
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Main Categories */}
-                <h2 className="text-xl font-bold mb-6 dark:text-white">
-                  Alle Kategorien
-                </h2>
-                <div className="space-y-3">
-                  {categories.map((category) => (
-                    <button
-                      key={category.name}
-                      onClick={() => setSelectedCategory(category.name)}
-                      className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition"
-                    >
+            <h2 className="text-xl font-bold mb-6 dark:text-white">
+              Alle Kategorien
+            </h2>
+            <div className="flex flex-col gap-3">
+              {categories.length > 0 ? (
+                categories.map((category) => (
+                  <Link key={category.id} href={`/category/${category.name}`}>
+                    <div className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition">
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
                         {category.name}
                       </span>
                       <span className="text-gray-400">→</span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Kategorien werden geladen...
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -956,7 +965,9 @@ export default function Navbar() {
             {/* Error message */}
             {error && (
               <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {error}
+                </p>
               </div>
             )}
 
