@@ -38,8 +38,14 @@ interface Category {
   name: string;
   description?: string | null;
   image?: string | null;
+  parentId?: number | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+  parent?: {
+    id: number;
+    name: string;
+  } | null;
+  children?: Category[];
   _count?: {
     products: number;
   };
@@ -113,6 +119,38 @@ export default function CategoriesListPage() {
       (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Organize categories hierarchically
+  type CategoryWithLevel = Category & { level: number };
+
+  const organizeHierarchically = (cats: Category[]): CategoryWithLevel[] => {
+    const result: CategoryWithLevel[] = [];
+    const parentMap = new Map<number, Category[]>();
+
+    // Group by parent
+    cats.forEach((cat) => {
+      const parentId = cat.parentId || 0;
+      if (!parentMap.has(parentId)) {
+        parentMap.set(parentId, []);
+      }
+      parentMap.get(parentId)!.push(cat);
+    });
+
+    // Recursive function to add categories and their children
+    const addCategory = (category: Category, level: number = 0) => {
+      result.push({ ...category, level });
+      const children = parentMap.get(category.id) || [];
+      children.forEach((child) => addCategory(child, level + 1));
+    };
+
+    // Add root categories first
+    const rootCategories = parentMap.get(0) || [];
+    rootCategories.forEach((cat) => addCategory(cat, 0));
+
+    return result;
+  };
+
+  const hierarchicalCategories = organizeHierarchically(filteredCategories);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -160,6 +198,7 @@ export default function CategoriesListPage() {
                 <TableRow>
                   <TableHead>Bild</TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead>Überkategorie</TableHead>
                   <TableHead>Beschreibung</TableHead>
                   <TableHead>Produkte</TableHead>
                   <TableHead>Erstellt</TableHead>
@@ -167,14 +206,14 @@ export default function CategoriesListPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCategories.length === 0 ? (
+                {hierarchicalCategories.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-gray-500 py-8">
+                    <TableCell colSpan={7} className="text-center text-gray-500 py-8">
                       {searchTerm ? "Keine Kategorien gefunden" : "Noch keine Kategorien vorhanden"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredCategories.map((category) => (
+                  hierarchicalCategories.map((category) => (
                     <TableRow key={category.id}>
                       <TableCell className="cursor-pointer" onClick={() => router.push(`/admin/category/${category.id}`)}>
                         {category.image ? (
@@ -193,7 +232,19 @@ export default function CategoriesListPage() {
                         )}
                       </TableCell>
                       <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/admin/category/${category.id}`)}>
-                        {category.name}
+                        <div style={{ paddingLeft: `${category.level * 20}px` }} className="flex items-center gap-2">
+                          {category.level > 0 && (
+                            <span className="text-gray-400">↳</span>
+                          )}
+                          {category.name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {category.parent ? (
+                          <Badge variant="outline">{category.parent.name}</Badge>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Hauptkategorie</span>
+                        )}
                       </TableCell>
                       <TableCell className="cursor-pointer" onClick={() => router.push(`/admin/category/${category.id}`)}>
                         {category.description ? (

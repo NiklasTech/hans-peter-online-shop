@@ -14,6 +14,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 
@@ -27,6 +34,11 @@ interface Category {
   name: string;
   description?: string | null;
   image?: string | null;
+  parentId?: number | null;
+  parent?: {
+    id: number;
+    name: string;
+  } | null;
 }
 
 export default function CategoryForm({ categoryId, isEditing = false }: CategoryFormProps) {
@@ -41,6 +53,8 @@ export default function CategoryForm({ categoryId, isEditing = false }: Category
   // Form State
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [parentId, setParentId] = useState<string>("");
+  const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -49,11 +63,29 @@ export default function CategoryForm({ categoryId, isEditing = false }: Category
 
   // Load category data if editing
   useEffect(() => {
+    loadAvailableCategories();
     if (isEditing && categoryId) {
       loadCategory();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryId, isEditing]);
+
+  const loadAvailableCategories = async () => {
+    try {
+      const response = await fetch("/api/admin/categories");
+      if (response.ok) {
+        const data = await response.json();
+        const categories = data.categories || [];
+        // Filter out the current category if editing
+        const filtered = isEditing && categoryId
+          ? categories.filter((cat: Category) => cat.id !== categoryId)
+          : categories;
+        setAvailableCategories(filtered);
+      }
+    } catch (err) {
+      console.error("Error loading categories:", err);
+    }
+  };
 
   const loadCategory = async () => {
     setLoading(true);
@@ -72,6 +104,7 @@ export default function CategoryForm({ categoryId, isEditing = false }: Category
       setName(category.name);
       setDescription(category.description || "");
       setCurrentImage(category.image || null);
+      setParentId(category.parentId ? category.parentId.toString() : "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ein Fehler ist aufgetreten");
     } finally {
@@ -178,6 +211,10 @@ export default function CategoryForm({ categoryId, isEditing = false }: Category
       formData.append("name", name.trim());
       formData.append("description", description.trim());
 
+      if (parentId) {
+        formData.append("parentId", parentId);
+      }
+
       if (isEditing && categoryId) {
         formData.append("id", categoryId.toString());
       }
@@ -268,6 +305,30 @@ export default function CategoryForm({ categoryId, isEditing = false }: Category
               disabled={saving}
               rows={4}
             />
+          </div>
+
+          <div>
+            <Label htmlFor="parentId">Überkategorie (optional)</Label>
+            <Select
+              value={parentId || "none"}
+              onValueChange={(value) => setParentId(value === "none" ? "" : value)}
+              disabled={saving}
+            >
+              <SelectTrigger id="parentId">
+                <SelectValue placeholder="Keine Überkategorie (Hauptkategorie)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Keine Überkategorie (Hauptkategorie)</SelectItem>
+                {availableCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id.toString()}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-gray-500 mt-1">
+              Wählen Sie eine übergeordnete Kategorie aus, um eine Hierarchie zu erstellen
+            </p>
           </div>
         </CardContent>
       </Card>

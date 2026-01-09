@@ -30,6 +30,7 @@ export async function GET(request: Request) {
       const category = await db.category.findUnique({
         where: { id: categoryId },
         include: {
+          parent: true,
           _count: {
             select: { products: true },
           },
@@ -56,6 +57,7 @@ export async function GET(request: Request) {
         skip,
         take: limit,
         include: {
+          parent: true,
           _count: {
             select: { products: true },
           },
@@ -89,6 +91,7 @@ export async function POST(request: Request) {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string | null;
     const image = formData.get("image") as File | null;
+    const parentId = formData.get("parentId") as string | null;
 
     // Validation
     if (!name) {
@@ -110,6 +113,20 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate parent category if provided
+    if (parentId) {
+      const parent = await db.category.findUnique({
+        where: { id: parseInt(parentId) },
+      });
+
+      if (!parent) {
+        return NextResponse.json(
+          { error: "Übergeordnete Kategorie nicht gefunden" },
+          { status: 404 }
+        );
+      }
+    }
+
     let imageUrl: string | null = null;
 
     // Process image if provided
@@ -125,8 +142,10 @@ export async function POST(request: Request) {
         name,
         description: description || null,
         image: imageUrl,
+        parentId: parentId ? parseInt(parentId) : null,
       },
       include: {
+        parent: true,
         _count: {
           select: { products: true },
         },
@@ -151,6 +170,7 @@ export async function PUT(request: Request) {
     const description = formData.get("description") as string | null;
     const image = formData.get("image") as File | null;
     const deleteImage = formData.get("deleteImage") === "true";
+    const parentId = formData.get("parentId") as string | null;
 
     // Validation
     if (isNaN(id)) {
@@ -194,6 +214,38 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Validate parent category if provided
+    const newParentId = parentId ? parseInt(parentId) : null;
+    if (newParentId) {
+      // Cannot set itself as parent
+      if (newParentId === id) {
+        return NextResponse.json(
+          { error: "Eine Kategorie kann nicht ihre eigene Überkategorie sein" },
+          { status: 400 }
+        );
+      }
+
+      const parent = await db.category.findUnique({
+        where: { id: newParentId },
+      });
+
+      if (!parent) {
+        return NextResponse.json(
+          { error: "Übergeordnete Kategorie nicht gefunden" },
+          { status: 404 }
+        );
+      }
+
+      // Check if the new parent is a child of this category (would create circular reference)
+      const isCircular = await checkCircularReference(id, newParentId);
+      if (isCircular) {
+        return NextResponse.json(
+          { error: "Zirkuläre Referenz: Die gewählte Überkategorie ist eine Unterkategorie dieser Kategorie" },
+          { status: 400 }
+        );
+      }
+    }
+
     let imageUrl: string | null = existingCategory.image;
 
     // Delete old image if requested
@@ -225,8 +277,10 @@ export async function PUT(request: Request) {
         name,
         description: description || null,
         image: imageUrl,
+        parentId: newParentId,
       },
       include: {
+        parent: true,
         _count: {
           select: { products: true },
         },
@@ -241,6 +295,26 @@ export async function PUT(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// Helper function to check for circular references
+async function checkCircularReference(categoryId: number, potentialParentId: number): Promise<boolean> {
+  let currentId: number | null = potentialParentId;
+
+  while (currentId !== null) {
+    if (currentId === categoryId) {
+      return true; // Circular reference found
+    }
+
+    const parent = await db.category.findUnique({
+      where: { id: currentId },
+      select: { parentId: true },
+    });
+
+    currentId = parent?.parentId || null;
+  }
+
+  return false;
 }
 
 export async function DELETE(request: Request) {
