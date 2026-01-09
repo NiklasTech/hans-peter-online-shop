@@ -26,37 +26,42 @@ export default function ImageCarousel({
   useEffect(() => {
     if (images.length > 0) {
       const timestamp = Date.now();
-      const busted = images.map(img => {
-        if (!img || img.startsWith('data:') || img.startsWith('blob:')) {
+      const busted = images.map((img) => {
+        if (!img || img.startsWith("data:") || img.startsWith("blob:")) {
           return img;
         }
-        const separator = img.includes('?') ? '&' : '?';
+        const separator = img.includes("?") ? "&" : "?";
         return `${img}${separator}v=${timestamp}`;
       });
       setCacheBustedImages(busted);
     }
   }, [images]);
 
-  const displayImages = cacheBustedImages.length > 0 ? cacheBustedImages : ["/placeholder.jpg"];
+  const displayImages =
+    cacheBustedImages.length > 0 ? cacheBustedImages : ["/placeholder.jpg"];
 
   return (
     <div className="space-y-4">
       {/* Main Carousel */}
-      <div className="relative bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden aspect-square flex items-center justify-center">
+      <div className="relative bg-gray-100 dark:bg-slate-800 rounded-2xl overflow-hidden aspect-square">
         <Carousel className="w-full h-full">
-          <CarouselContent className="h-full">
+          <CarouselContent className="h-full ml-0">
             {displayImages.map((image, index) => (
-              <CarouselItem key={index} className="h-full">
-                <div className="flex items-center justify-center h-full w-full">
+              <CarouselItem
+                key={index}
+                className="h-full pl-0 flex items-center justify-center"
+              >
+                <div className="w-full h-full flex items-center justify-center p-4">
                   <img
                     src={image}
                     alt={`${productName} - Bild ${index + 1}`}
-                    className="w-full h-full object-cover"
+                    className="max-w-full max-h-full object-contain"
                   />
                 </div>
               </CarouselItem>
             ))}
           </CarouselContent>
+
           {displayImages.length > 1 && (
             <>
               <CarouselPrevious className="left-4" />
