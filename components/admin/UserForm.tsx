@@ -311,7 +311,7 @@ export default function UserForm({ userId, isEditing = false }: UserFormProps) {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex gap-4">
+      <div className="flex justify-end gap-4">
         <Button
           type="button"
           variant="outline"
