@@ -240,11 +240,14 @@ export default function BrandsListPage() {
                                 e.preventDefault();
                                 handleDelete(brand.id);
                               }}
+                              disabled={deleting === brand.id}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              {deleteConfirm === brand.id
-                                  ? "Wirklich?"
-                                  : "Löschen"}
+                              {deleting === brand.id
+                                ? "Wird gelöscht..."
+                                : deleteConfirm === brand.id
+                                ? "Wirklich Löschen?"
+                                : "Löschen"}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
