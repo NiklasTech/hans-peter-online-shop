@@ -34,7 +34,8 @@
       "Bash(fi)",
       "Bash(ls:*)",
       "Bash(npm run lint:*)",
-      "Bash(npx shadcn@latest:*)"
+      "Bash(npx shadcn@latest:*)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
