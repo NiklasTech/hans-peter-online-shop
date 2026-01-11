@@ -132,6 +132,24 @@ model Order {
   userId    Int
   status    String   @default("pending")
   total     Float
+
+  // Snapshot der Lieferadresse zum Bestellzeitpunkt
+  shippingStreet      String
+  shippingHouseNumber String
+  shippingCity        String
+  shippingPostalCode  String
+  shippingCountryCode String   @default("DE")
+  shippingFirstName   String
+  shippingLastName    String
+  shippingPhone       String?
+
+  // Zahlungs- und Versandinformationen
+  paymentMethod       String
+  shippingMethod      String?
+  shippingCost        Float     @default(0)
+  trackingNumber      String?
+  paymentStatus       String    @default("pending")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
