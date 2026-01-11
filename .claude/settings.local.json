@@ -35,7 +35,10 @@
       "Bash(ls:*)",
       "Bash(npm run lint:*)",
       "Bash(npx shadcn@latest:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(npm run db:migrate:dev:*)",
+      "Bash(npm run db:clean:*)",
+      "Bash(npm run db:seed:orders:*)"
     ],
     "deny": [],
     "ask": []

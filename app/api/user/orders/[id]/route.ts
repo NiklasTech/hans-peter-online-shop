@@ -1,14 +1,17 @@
 /**
- * API Route: /api/user/orders
+ * API Route: /api/user/orders/[id]
  *
- * GET - Get all user orders
+ * GET - Get a specific user order by ID
  */
 
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getCurrentUser();
 
@@ -19,8 +22,21 @@ export async function GET() {
       );
     }
 
-    const orders = await db.order.findMany({
-      where: { userId: session.userId },
+    const { id } = await params;
+    const orderId = parseInt(id);
+
+    if (isNaN(orderId)) {
+      return NextResponse.json(
+        { error: "Ungültige Bestellnummer" },
+        { status: 400 }
+      );
+    }
+
+    const order = await db.order.findFirst({
+      where: {
+        id: orderId,
+        userId: session.userId,
+      },
       include: {
         orderItems: {
           include: {
@@ -29,6 +45,7 @@ export async function GET() {
                 id: true,
                 name: true,
                 previewImage: true,
+                price: true,
                 brand: {
                   select: {
                     name: true,
@@ -38,12 +55,24 @@ export async function GET() {
             },
           },
         },
+        user: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' },
     });
 
+    if (!order) {
+      return NextResponse.json(
+        { error: "Bestellung nicht gefunden" },
+        { status: 404 }
+      );
+    }
+
     // Serialize Decimal values to numbers and ensure all fields are included
-    const serializedOrders = orders.map(order => ({
+    const serializedOrder = {
       id: order.id,
       userId: order.userId,
       status: order.status,
@@ -63,6 +92,7 @@ export async function GET() {
       paymentStatus: order.paymentStatus,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
+      user: order.user,
       orderItems: order.orderItems.map(item => ({
         id: item.id,
         orderId: item.orderId,
@@ -71,13 +101,13 @@ export async function GET() {
         price: Number(item.price),
         product: item.product,
       })),
-    }));
+    };
 
-    return NextResponse.json({ orders: serializedOrders });
+    return NextResponse.json({ order: serializedOrder });
   } catch (error) {
-    console.error("Fehler beim Abrufen der Bestellungen:", error);
+    console.error("Fehler beim Abrufen der Bestellung:", error);
     return NextResponse.json(
-      { error: "Bestellungen konnten nicht geladen werden" },
+      { error: "Bestellung konnte nicht geladen werden" },
       { status: 500 }
     );
   }
