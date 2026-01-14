@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx server.ts",
     "build": "next build",
-    "start": "npm run db:migrate:deploy && next start",
+    "start": "npm run db:migrate:deploy && tsx server.ts",
     "lint": "eslint",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
@@ -68,6 +68,8 @@
     "react-dom": "19.2.0",
     "react-hook-form": "^7.66.1",
     "sharp": "^0.34.5",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.1.12"
   },
@@ -80,6 +82,7 @@
     "@types/pg": "^8.15.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/socket.io": "^3.0.1",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "prisma": "^7.1.0",

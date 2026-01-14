@@ -14,6 +14,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -26,6 +27,7 @@ const adminLinks = [
   { name: "Kategorien", href: "/admin/categories", icon: Grid3X3 },
   { name: "Marken", href: "/admin/brands", icon: Palette },
   { name: "Benutzer", href: "/admin/users", icon: Users },
+  { name: "Support", href: "/admin/support", icon: MessageSquare },
 ];
 
 function useLocalStorageState(key: string, defaultValue: boolean) {
