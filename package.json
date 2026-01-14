@@ -19,7 +19,10 @@
     "db:clean": "tsx prisma/seed-clean.ts",
     "db:reset": "npm run db:clean && npm run db:seed:all:unsplash",
     "db:backup": "tsx scripts/backup-database.ts",
-    "db:restore": "tsx scripts/restore-database.ts"
+    "db:restore": "tsx scripts/restore-database.ts",
+    "db:push": "prisma db push",
+    "db:sync": "prisma generate && prisma db push",
+    "postpull": "npm install && npm run db:sync"
   },
   "prisma": {
     "seed": "tsx prisma/seed-users.ts"
