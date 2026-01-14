@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/admin/Sidebar";
 import { getCurrentAdmin } from "@/lib/auth";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default async function RootLayout({
             <Sidebar isAdmin={isAdmin} />
             <main className="flex-1 overflow-y-auto">{children}</main>
           </div>
+          <ChatWidget />
         </div>
       </body>
     </html>
