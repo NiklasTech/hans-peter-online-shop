@@ -13,12 +13,16 @@
     "db:seed:users": "tsx prisma/seed-users.ts",
     "db:seed:products": "tsx prisma/seed-products.ts",
     "db:seed:products:unsplash": "tsx prisma/seed-products-unsplash.ts",
-    "db:seed:all": "npm run db:seed:users && npm run db:seed:products",
-    "db:seed:all:unsplash": "npm run db:seed:users && npm run db:seed:products:unsplash",
+    "db:seed:orders": "tsx prisma/seed-orders.ts",
+    "db:seed:all": "npm run db:seed:users && npm run db:seed:products && npm run db:seed:orders",
+    "db:seed:all:unsplash": "npm run db:seed:users && npm run db:seed:products:unsplash && npm run db:seed:orders",
     "db:clean": "tsx prisma/seed-clean.ts",
     "db:reset": "npm run db:clean && npm run db:seed:all:unsplash",
     "db:backup": "tsx scripts/backup-database.ts",
-    "db:restore": "tsx scripts/restore-database.ts"
+    "db:restore": "tsx scripts/restore-database.ts",
+    "db:push": "prisma db push",
+    "db:sync": "prisma generate && prisma db push",
+    "postpull": "npm install && npm run db:sync"
   },
   "prisma": {
     "seed": "tsx prisma/seed-users.ts"
