@@ -264,7 +264,13 @@ export default function Navbar() {
       const response = await fetch("/api/auth/me");
       if (response.ok) {
         const data = await response.json();
-        setUser(data.user);
+        // The API now returns flat user data instead of nested { user: {...} }
+        setUser({
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          isAdmin: data.isAdmin,
+        });
         setHasAdminSession(data.hasAdminSession);
       } else {
         // Not authenticated - reset all states

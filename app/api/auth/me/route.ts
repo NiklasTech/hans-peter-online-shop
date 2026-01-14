@@ -20,30 +20,45 @@ export async function GET() {
       );
     }
 
-    // If user session exists, fetch full user data
-    let userData = null;
-    if (userSession) {
-      const user = await db.user.findUnique({
-        where: { id: userSession.userId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          isAdmin: true,
-          createdAt: true,
-        },
-      });
+    // Get userId from either session
+    const userId = userSession?.userId || adminSession?.userId;
 
-      if (user) {
-        userData = user;
-      }
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Not authenticated" },
+        { status: 401 }
+      );
     }
 
+    // Fetch full user data
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isAdmin: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Return user data with userId field for compatibility
     return NextResponse.json({
-      user: userData,
+      userId: user.id,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      createdAt: user.createdAt,
       hasUserSession: !!userSession,
       hasAdminSession: !!adminSession,
-      isAdmin: userSession?.isAdmin || false,
     });
   } catch (error) {
     console.error("Error fetching current user:", error);

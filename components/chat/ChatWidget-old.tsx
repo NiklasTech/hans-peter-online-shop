@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useRef, useEffect } from "react";
+import { Fragment, useState, useRef } from "react";
 import { MessageCircle, X, Send, Paperclip, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,170 +17,84 @@ import {
 import { PrimaryMessage } from "./message-items/primary-message";
 import { AdditionalMessage } from "./message-items/additional-message";
 import { DateItem } from "./message-items/date-item";
-import { useSocket } from "@/hooks/useSocket";
 
 interface Message {
-  id: number;
-  chatId: string;
-  userId: number;
-  content: string;
-  isAdmin: boolean;
-  createdAt: Date;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
-
-interface SupportChat {
   id: string;
-  userId: number;
-  status: string;
-  messages: Message[];
+  sender: {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+    username: string;
+  };
+  timestamp: number;
+  content: string;
 }
 
-interface User {
-  userId: number;
-  name?: string;
-  email: string;
-  isAdmin?: boolean;
-}
+const SUPPORT_SENDER = {
+  id: "support-id",
+  name: "Hans Peter Support",
+  avatarUrl: "/logo.png",
+  username: "@support",
+};
+
+const USER_SENDER = {
+  id: "user-id",
+  name: "Sie",
+  username: "@user",
+};
+
+const initialMessages: Message[] = [
+  {
+    id: "1",
+    sender: SUPPORT_SENDER,
+    timestamp: Date.now() - 60000,
+    content: "Hallo! Willkommen bei Hans Peter. Wie kann ich Ihnen heute helfen?",
+  },
+];
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [chat, setChat] = useState<SupportChat | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inputValue, setInputValue] = useState("");
   const [size, setSize] = useState({ width: 420, height: 650 });
   const [isResizing, setIsResizing] = useState(false);
-  const [loading, setLoading] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
-  const socket = useSocket();
-
-  // Get current user - check periodically in case of login
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-        }
-      } catch (error) {
-        // User not logged in, widget will be hidden
-        setUser(null);
-      }
-    };
-
-    fetchUser();
-
-    // Re-check user every 5 seconds to detect login
-    const interval = setInterval(fetchUser, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Fetch or create chat when opened
-  useEffect(() => {
-    if (isOpen && user && !chat) {
-      fetchChat();
-    }
-  }, [isOpen, user]);
-
-  // Socket listeners - setup once when chat is loaded
-  useEffect(() => {
-    if (!socket || !chat) return;
-
-    console.log("🔗 Joining chat room:", chat.id);
-    socket.emit("join-chat", chat.id);
-
-    // Handler functions
-    const handleNewMessage = (newMessage: Message) => {
-      console.log("📩 Received new message:", newMessage);
-      if (newMessage.chatId === chat.id) {
-        setChat((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            messages: [...prev.messages, newMessage],
-          };
-        });
-
-        // If admin message and chat is closed, increment unread
-        if (newMessage.isAdmin && !isOpen) {
-          setUnreadCount((prev) => prev + 1);
-        }
-      }
-    };
-
-    const handleMessagesRead = ({ chatId }: { chatId: string }) => {
-      if (chatId === chat.id) {
-        setChat((prev) => {
-          if (!prev) return null;
-          return {
-            ...prev,
-            messages: prev.messages.map((msg) => ({
-              ...msg,
-              read: true,
-            })),
-          };
-        });
-      }
-    };
-
-    // Register listeners
-    socket.on("new-message", handleNewMessage);
-    socket.on("messages-read", handleMessagesRead);
-
-    return () => {
-      console.log("🔌 Leaving chat room:", chat.id);
-      socket.emit("leave-chat", chat.id);
-      socket.off("new-message", handleNewMessage);
-      socket.off("messages-read", handleMessagesRead);
-    };
-  }, [socket, chat?.id]); // Only re-run when socket or chat.id changes
-
-  const fetchChat = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/chat");
-      if (response.ok) {
-        const data = await response.json();
-        setChat(data);
-
-        // Mark messages as read when opening
-        if (socket) {
-          socket.emit("mark-read", { chatId: data.id, isAdmin: false });
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching chat:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSendMessage = () => {
-    if (!inputValue.trim() || !chat || !socket || !user) return;
+    if (!inputValue.trim()) return;
 
-    console.log("Sending message:", { chatId: chat.id, userId: user.userId, content: inputValue.trim() });
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      sender: USER_SENDER,
+      timestamp: Date.now(),
+      content: inputValue,
+    };
 
-    // Send via socket
-    socket.emit("send-message", {
-      chatId: chat.id,
-      userId: user.userId,
-      content: inputValue.trim(),
-      isAdmin: false,
-    });
-
+    setMessages((prev) => [newMessage, ...prev]);
     setInputValue("");
 
     // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
+
+    // Simulate support response
+    setTimeout(() => {
+      const supportResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: SUPPORT_SENDER,
+        timestamp: Date.now(),
+        content:
+          "Vielen Dank für Ihre Nachricht! Unser Support-Team wird sich in Kürze bei Ihnen melden.",
+      };
+      setMessages((prev) => [supportResponse, ...prev]);
+
+      if (!isOpen) {
+        setUnreadCount((prev) => prev + 1);
+      }
+    }, 1000);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -240,29 +154,6 @@ export function ChatWidget() {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
-  // Convert messages to old format for rendering
-  const displayMessages = chat
-    ? chat.messages
-        .slice()
-        .reverse()
-        .map((msg) => ({
-          id: msg.id.toString(),
-          sender: {
-            id: msg.userId.toString(),
-            name: msg.user.name,
-            avatarUrl: msg.isAdmin ? "/logo.png" : undefined,
-            username: msg.isAdmin ? "@support" : "@user",
-          },
-          timestamp: new Date(msg.createdAt).getTime(),
-          content: msg.content,
-        }))
-    : [];
-
-  // Don't show widget if user is not logged in
-  if (!user) {
-    return null;
-  }
-
   return (
     <>
       {!isOpen ? (
@@ -292,31 +183,39 @@ export function ChatWidget() {
             height: `${size.height}px`,
           }}
         >
-          {/* Resize handles */}
+          {/* Resize handles - positioned inside but with high z-index */}
+          {/* Top-left corner */}
           <div
             className="absolute top-0 left-0 w-8 h-8 cursor-nw-resize z-[100]"
             onMouseDown={(e) => handleMouseDown(e, "top-left")}
           />
+          {/* Top-right corner - deactivated to not block close button */}
+          {/* Bottom-left corner */}
           <div
             className="absolute bottom-0 left-0 w-8 h-8 cursor-sw-resize z-[100]"
             onMouseDown={(e) => handleMouseDown(e, "bottom-left")}
           />
+          {/* Bottom-right corner */}
           <div
             className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize z-[100]"
             onMouseDown={(e) => handleMouseDown(e, "bottom-right")}
           />
+          {/* Top edge - avoiding right corner area */}
           <div
             className="absolute top-0 left-8 right-12 h-3 cursor-n-resize z-[100]"
             onMouseDown={(e) => handleMouseDown(e, "top")}
           />
+          {/* Bottom edge */}
           <div
             className="absolute bottom-0 left-8 right-8 h-3 cursor-s-resize z-[100]"
             onMouseDown={(e) => handleMouseDown(e, "bottom")}
           />
+          {/* Left edge */}
           <div
             className="absolute left-0 top-8 bottom-8 w-3 cursor-w-resize z-[100]"
             onMouseDown={(e) => handleMouseDown(e, "left")}
           />
+          {/* Right edge - avoiding top corner area */}
           <div
             className="absolute right-0 top-12 bottom-8 w-3 cursor-e-resize z-[100]"
             onMouseDown={(e) => handleMouseDown(e, "right")}
@@ -352,54 +251,15 @@ export function ChatWidget() {
             </ChatHeader>
 
             <ChatMessages className="scrollbar-hidden">
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-muted-foreground">Laden...</p>
-                </div>
-              ) : displayMessages.length === 0 ? (
-                <div className="flex items-center justify-center h-full">
-                  <p className="text-muted-foreground">
-                    Keine Nachrichten. Starte ein Gespräch!
-                  </p>
-                </div>
-              ) : (
-                displayMessages.map((msg, i, msgs) => {
-                  // If date changed, show date item
-                  if (
-                    new Date(msg.timestamp).toDateString() !==
-                    new Date(msgs[i + 1]?.timestamp).toDateString()
-                  ) {
-                    return (
-                      <Fragment key={msg.id}>
-                        <PrimaryMessage
-                          avatarSrc={msg.sender.avatarUrl}
-                          avatarAlt={msg.sender.username}
-                          avatarFallback={msg.sender.name.slice(0, 2)}
-                          senderName={msg.sender.name}
-                          content={msg.content}
-                          timestamp={msg.timestamp}
-                        />
-                        <DateItem timestamp={msg.timestamp} className="my-4" />
-                      </Fragment>
-                    );
-                  }
-
-                  // If next item is same user, show additional
-                  if (msg.sender.id === msgs[i + 1]?.sender.id) {
-                    return (
-                      <AdditionalMessage
-                        key={msg.id}
-                        content={msg.content}
-                        timestamp={msg.timestamp}
-                      />
-                    );
-                  }
-                  // Else, show primary
-                  else {
-                    return (
+              {messages.map((msg, i, msgs) => {
+                // If date changed, show date item
+                if (
+                  new Date(msg.timestamp).toDateString() !==
+                  new Date(msgs[i + 1]?.timestamp).toDateString()
+                ) {
+                  return (
+                    <Fragment key={msg.id}>
                       <PrimaryMessage
-                        className="mt-4"
-                        key={msg.id}
                         avatarSrc={msg.sender.avatarUrl}
                         avatarAlt={msg.sender.username}
                         avatarFallback={msg.sender.name.slice(0, 2)}
@@ -407,15 +267,42 @@ export function ChatWidget() {
                         content={msg.content}
                         timestamp={msg.timestamp}
                       />
-                    );
-                  }
-                })
-              )}
+                      <DateItem timestamp={msg.timestamp} className="my-4" />
+                    </Fragment>
+                  );
+                }
+
+                // If next item is same user, show additional
+                if (msg.sender.id === msgs[i + 1]?.sender.id) {
+                  return (
+                    <AdditionalMessage
+                      key={msg.id}
+                      content={msg.content}
+                      timestamp={msg.timestamp}
+                    />
+                  );
+                }
+                // Else, show primary
+                else {
+                  return (
+                    <PrimaryMessage
+                      className="mt-4"
+                      key={msg.id}
+                      avatarSrc={msg.sender.avatarUrl}
+                      avatarAlt={msg.sender.username}
+                      avatarFallback={msg.sender.name.slice(0, 2)}
+                      senderName={msg.sender.name}
+                      content={msg.content}
+                      timestamp={msg.timestamp}
+                    />
+                  );
+                }
+              })}
             </ChatMessages>
 
             <ChatToolbar>
               <ChatToolbarAddonStart>
-                <Button variant="ghost" className="size-8 @md/chat:size-9" disabled>
+                <Button variant="ghost" className="size-8 @md/chat:size-9">
                   <Paperclip className="size-4 @md/chat:size-5 stroke-[1.7px]" />
                 </Button>
               </ChatToolbarAddonStart>
@@ -425,17 +312,16 @@ export function ChatWidget() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                disabled={loading || !chat}
               />
               <ChatToolbarAddonEnd>
-                <Button variant="ghost" className="size-8 @md/chat:size-9" disabled>
+                <Button variant="ghost" className="size-8 @md/chat:size-9">
                   <Smile className="size-4 @md/chat:size-5 stroke-[1.7px]" />
                 </Button>
                 <Button
                   variant="ghost"
                   className="size-8 @md/chat:size-9"
                   onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || loading || !chat}
+                  disabled={!inputValue.trim()}
                 >
                   <Send className="size-4 @md/chat:size-5 stroke-[1.7px]" />
                 </Button>
