@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, Filter, X } from "lucide-react";
 
 interface SearchProduct {
   id: number;
@@ -28,14 +28,55 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  useEffect(() => {
-    if (initialQuery) {
-      performSearch(initialQuery);
-    }
-  }, [initialQuery]);
+  // Get all filter params
+  const categoriesParam = searchParams.get("categories");
+  const brandsParam = searchParams.get("brands");
+  const minPriceParam = searchParams.get("minPrice");
+  const maxPriceParam = searchParams.get("maxPrice");
+  const inStockParam = searchParams.get("inStock");
 
-  const performSearch = async (query: string) => {
-    if (!query.trim()) {
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      initialQuery ||
+      categoriesParam ||
+      brandsParam ||
+      minPriceParam ||
+      maxPriceParam ||
+      inStockParam === "true"
+    );
+  }, [initialQuery, categoriesParam, brandsParam, minPriceParam, maxPriceParam, inStockParam]);
+
+  // Build search description
+  const filterDescription = useMemo(() => {
+    const parts: string[] = [];
+    if (initialQuery) parts.push(`"${initialQuery}"`);
+    if (categoriesParam) {
+      const count = categoriesParam.split(",").length;
+      parts.push(`${count} Kategorie${count > 1 ? "n" : ""}`);
+    }
+    if (brandsParam) {
+      const count = brandsParam.split(",").length;
+      parts.push(`${count} Marke${count > 1 ? "n" : ""}`);
+    }
+    if (minPriceParam || maxPriceParam) {
+      parts.push("Preisfilter");
+    }
+    if (inStockParam === "true") {
+      parts.push("Nur verfügbar");
+    }
+    return parts.join(", ");
+  }, [initialQuery, categoriesParam, brandsParam, minPriceParam, maxPriceParam, inStockParam]);
+
+  useEffect(() => {
+    if (hasActiveFilters) {
+      performSearch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
+
+  const performSearch = async () => {
+    if (!hasActiveFilters) {
       setProducts([]);
       setHasSearched(false);
       return;
@@ -45,9 +86,8 @@ export default function SearchPage() {
     setHasSearched(true);
 
     try {
-      const response = await fetch(
-        `/api/products/search?q=${encodeURIComponent(query)}`
-      );
+      // Forward all search params to the API
+      const response = await fetch(`/api/products/search?${searchParams.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setProducts(data.products || []);
@@ -63,9 +103,16 @@ export default function SearchPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-      performSearch(searchQuery);
+      // Preserve existing filters and update query
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("q", searchQuery.trim());
+      router.push(`/search?${params.toString()}`);
     }
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    router.push("/search");
   };
 
   const formatPrice = (price: number) => {
@@ -101,20 +148,66 @@ export default function SearchPage() {
 
         {/* Search Results Info */}
         {hasSearched && (
-          <div className="mb-6">
-            <p className="text-gray-600 dark:text-gray-400">
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Suche läuft...
-                </span>
-              ) : (
-                <>
-                  {products.length} Ergebnis{products.length !== 1 ? "se" : ""}{" "}
-                  für "{initialQuery}"
-                </>
+          <div className="mb-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-gray-600 dark:text-gray-400">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Suche läuft...
+                  </span>
+                ) : (
+                  <>
+                    {products.length} Ergebnis{products.length !== 1 ? "se" : ""}
+                    {filterDescription && ` für ${filterDescription}`}
+                  </>
+                )}
+              </p>
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  <X className="h-4 w-4" />
+                  Filter zurücksetzen
+                </button>
               )}
-            </p>
+            </div>
+            {/* Active Filter Badges */}
+            {hasActiveFilters && (
+              <div className="flex flex-wrap gap-2">
+                {initialQuery && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Search className="h-3 w-3" />
+                    {initialQuery}
+                  </Badge>
+                )}
+                {categoriesParam && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Filter className="h-3 w-3" />
+                    {categoriesParam.split(",").length} Kategorien
+                  </Badge>
+                )}
+                {brandsParam && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Filter className="h-3 w-3" />
+                    {brandsParam.split(",").length} Marken
+                  </Badge>
+                )}
+                {(minPriceParam || maxPriceParam) && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Filter className="h-3 w-3" />
+                    {minPriceParam || "0"} - {maxPriceParam || "∞"} €
+                  </Badge>
+                )}
+                {inStockParam === "true" && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Filter className="h-3 w-3" />
+                    Nur verfügbar
+                  </Badge>
+                )}
+              </div>
+            )}
           </div>
         )}
 

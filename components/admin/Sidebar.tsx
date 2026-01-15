@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, Suspense } from "react";
 import {
   Grid3X3,
   LogOut,
@@ -16,6 +16,7 @@ import {
   ChevronRight,
   MessageSquare,
 } from "lucide-react";
+import SearchFilter from "@/components/SearchFilter";
 
 interface SidebarProps {
   isAdmin?: boolean;
@@ -93,19 +94,17 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         )}
       </button>
 
-      {/* Mobile Burger Menu Button - Only shows when admin */}
-      {isAdmin && (
-        <button
-          onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="md:hidden fixed top-[85px] left-4 z-40 p-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg shadow-md transition-all duration-200 cursor-pointer"
-        >
-          {isMobileOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
-        </button>
-      )}
+      {/* Mobile Burger Menu Button - Always visible for filter access */}
+      <button
+        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        className="md:hidden fixed top-[85px] left-4 z-40 p-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg shadow-md transition-all duration-200 cursor-pointer"
+      >
+        {isMobileOpen ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <Menu className="h-5 w-5" />
+        )}
+      </button>
 
       {/* Mobile Backdrop */}
       {isMobileOpen && (
@@ -122,9 +121,20 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         }`}
       >
         <div className="p-6 space-y-8">
+          {/* Search Filter Section - Always visible */}
+          <Suspense
+            fallback={
+              <div className="py-4 text-center text-sm text-gray-500">
+                Lädt Filter...
+              </div>
+            }
+          >
+            <SearchFilter />
+          </Suspense>
+
           {/* Admin Section */}
           {isAdmin && (
-            <div className="space-y-3">
+            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Admin Panel
               </h3>
@@ -180,9 +190,20 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         }`}
       >
         <div className="p-6 space-y-8">
+          {/* Search Filter Section - Always visible */}
+          <Suspense
+            fallback={
+              <div className="py-4 text-center text-sm text-gray-500">
+                Lädt Filter...
+              </div>
+            }
+          >
+            <SearchFilter onClose={() => setIsMobileOpen(false)} />
+          </Suspense>
+
           {/* Admin Section */}
           {isAdmin && (
-            <div className="space-y-3">
+            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Admin Panel
               </h3>

@@ -40,7 +40,8 @@
       "Bash(npm run db:clean:*)",
       "Bash(npm run db:seed:orders:*)",
       "Bash(npm run db:push:*)",
-      "Bash(set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=Alles gut ich führe den datenbank reset aus ichhabe ja das backuo und kann alles neu laden)"
+      "Bash(set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=Alles gut ich führe den datenbank reset aus ichhabe ja das backuo und kann alles neu laden)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
