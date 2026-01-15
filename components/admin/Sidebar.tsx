@@ -59,6 +59,19 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
   const [isOpen, setIsOpen] = useLocalStorageState("admin-sidebar-open", false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // Determine if we're in the admin area
+  const isInAdminArea = pathname.startsWith("/admin");
+
+  // Determine if search filter should be shown (product pages, category pages, search page)
+  const showSearchFilter =
+    !isInAdminArea &&
+    (pathname.startsWith("/product") ||
+      pathname.startsWith("/category") ||
+      pathname.startsWith("/search"));
+
+  // Only show sidebar if there's content to display
+  const shouldShowSidebar = showSearchFilter || (isAdmin && isInAdminArea);
+
   const handleAdminLogout = async () => {
     try {
       await fetch("/api/admin/auth/logout", { method: "POST" });
@@ -78,9 +91,14 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
+  // Don't render anything if sidebar shouldn't be shown
+  if (!shouldShowSidebar) {
+    return null;
+  }
+
   return (
     <>
-      {/* Desktop Sidebar Toggle Button - Fixed position, always visible */}
+      {/* Desktop Sidebar Toggle Button - Only visible when sidebar has content */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`hidden md:flex fixed top-[85px] z-30 p-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-800 rounded-r-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-300 cursor-pointer shadow-md ${
@@ -94,7 +112,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         )}
       </button>
 
-      {/* Mobile Burger Menu Button - Always visible for filter access */}
+      {/* Mobile Burger Menu Button - Only visible when sidebar has content */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         className="md:hidden fixed top-[85px] left-4 z-40 p-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg shadow-md transition-all duration-200 cursor-pointer"
@@ -121,20 +139,22 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         }`}
       >
         <div className="p-6 space-y-8">
-          {/* Search Filter Section - Always visible */}
-          <Suspense
-            fallback={
-              <div className="py-4 text-center text-sm text-gray-500">
-                Lädt Filter...
-              </div>
-            }
-          >
-            <SearchFilter />
-          </Suspense>
+          {/* Search Filter Section - Only on product/category/search pages */}
+          {showSearchFilter && (
+            <Suspense
+              fallback={
+                <div className="py-4 text-center text-sm text-gray-500">
+                  Lädt Filter...
+                </div>
+              }
+            >
+              <SearchFilter />
+            </Suspense>
+          )}
 
-          {/* Admin Section */}
-          {isAdmin && (
-            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Admin Section - Only in admin area */}
+          {isAdmin && isInAdminArea && (
+            <div className="space-y-3">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Admin Panel
               </h3>
@@ -190,20 +210,22 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         }`}
       >
         <div className="p-6 space-y-8">
-          {/* Search Filter Section - Always visible */}
-          <Suspense
-            fallback={
-              <div className="py-4 text-center text-sm text-gray-500">
-                Lädt Filter...
-              </div>
-            }
-          >
-            <SearchFilter onClose={() => setIsMobileOpen(false)} />
-          </Suspense>
+          {/* Search Filter Section - Only on product/category/search pages */}
+          {showSearchFilter && (
+            <Suspense
+              fallback={
+                <div className="py-4 text-center text-sm text-gray-500">
+                  Lädt Filter...
+                </div>
+              }
+            >
+              <SearchFilter onClose={() => setIsMobileOpen(false)} />
+            </Suspense>
+          )}
 
-          {/* Admin Section */}
-          {isAdmin && (
-            <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          {/* Admin Section - Only in admin area */}
+          {isAdmin && isInAdminArea && (
+            <div className="space-y-3">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Admin Panel
               </h3>
