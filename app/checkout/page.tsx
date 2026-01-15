@@ -22,6 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { PAYMENT_METHODS, PaymentModal } from "@/components/payment";
 
 interface CartItem {
   id: number;
@@ -51,13 +52,6 @@ interface Address {
 
 type CheckoutStep = 1 | 2 | 3 | 4;
 
-const PAYMENT_METHODS = [
-  { id: "paypal", name: "PayPal", icon: "💳" },
-  { id: "credit_card", name: "Kreditkarte", icon: "💳" },
-  { id: "sepa", name: "SEPA Lastschrift", icon: "🏦" },
-  { id: "sofort", name: "Sofortüberweisung", icon: "⚡" },
-];
-
 export default function CheckoutPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>(1);
@@ -68,6 +62,7 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [updatingItemId, setUpdatingItemId] = useState<number | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     fetchCheckoutData();
@@ -149,13 +144,18 @@ export default function CheckoutPage() {
     }
   };
 
-  const placeOrder = async () => {
+  const openPaymentModal = () => {
     if (!selectedAddressId) {
       alert("Bitte wähle eine Lieferadresse aus");
       return;
     }
+    setShowPaymentModal(true);
+  };
 
+  const handlePaymentComplete = async () => {
+    setShowPaymentModal(false);
     setIsPlacingOrder(true);
+
     try {
       const response = await fetch("/api/orders", {
         method: "POST",
@@ -460,11 +460,28 @@ export default function CheckoutPage() {
                 <CardContent>
                   <RadioGroup value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
                     {PAYMENT_METHODS.map((method) => (
-                      <div key={method.id} className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800">
+                      <div
+                        key={method.id}
+                        className={`flex items-center gap-3 p-4 border rounded-lg transition-colors cursor-pointer ${
+                          selectedPaymentMethod === method.id
+                            ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                            : "hover:bg-gray-50 dark:hover:bg-slate-800"
+                        }`}
+                        onClick={() => setSelectedPaymentMethod(method.id)}
+                      >
                         <RadioGroupItem value={method.id} id={`payment-${method.id}`} />
-                        <Label htmlFor={`payment-${method.id}`} className="flex-1 cursor-pointer flex items-center gap-3">
-                          <span className="text-2xl">{method.icon}</span>
-                          <span className="font-medium">{method.name}</span>
+                        <Label htmlFor={`payment-${method.id}`} className="flex-1 cursor-pointer">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex-1">
+                              <div className="font-medium">{method.name}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                {method.description}
+                              </div>
+                            </div>
+                            <div className="shrink-0 ml-4">
+                              <method.Logo />
+                            </div>
+                          </div>
                         </Label>
                       </div>
                     ))}
@@ -597,7 +614,7 @@ export default function CheckoutPage() {
                     <>
                       <Button
                         className="w-full"
-                        onClick={placeOrder}
+                        onClick={openPaymentModal}
                         disabled={isPlacingOrder}
                       >
                         {isPlacingOrder ? (
@@ -608,7 +625,7 @@ export default function CheckoutPage() {
                         ) : (
                           <>
                             <Check className="w-4 h-4 mr-2" />
-                            Jetzt kaufen
+                            Jetzt bezahlen
                           </>
                         )}
                       </Button>
@@ -645,6 +662,15 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        paymentMethod={selectedPaymentMethod}
+        total={formatPrice(calculateFinalTotal())}
+        onComplete={handlePaymentComplete}
+        onCancel={() => setShowPaymentModal(false)}
+      />
     </div>
   );
 }

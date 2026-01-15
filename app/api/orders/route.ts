@@ -55,17 +55,32 @@ export async function POST(request: Request) {
       }
     }
 
-    // Calculate total
-    const total = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    // Calculate total and shipping
+    const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    const shippingCost = subtotal > 50 ? 0 : 4.99;
+    const total = subtotal + shippingCost;
 
     // Create order with order items in a transaction
     const order = await prisma.$transaction(async (tx) => {
-      // Create order
+      // Create order with shipping address snapshot
       const newOrder = await tx.order.create({
         data: {
           userId: user.userId,
           status: "pending",
           total: total,
+          // Snapshot shipping address
+          shippingStreet: address.street,
+          shippingHouseNumber: address.houseNumber,
+          shippingCity: address.city,
+          shippingPostalCode: address.postalCode,
+          shippingCountryCode: address.countryCode,
+          shippingFirstName: address.firstName,
+          shippingLastName: address.lastName,
+          shippingPhone: address.phone,
+          // Payment info
+          paymentMethod: paymentMethod,
+          paymentStatus: "paid", // Fake payment is always successful
+          shippingCost: shippingCost,
         },
       });
 
