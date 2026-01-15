@@ -75,7 +75,6 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
   const handleAdminLogout = async () => {
     try {
       await fetch("/api/admin/auth/logout", { method: "POST" });
-      // Hard reload to ensure all components re-render with new auth state
       window.location.href = "/";
     } catch (error) {
       console.error("Error logging out admin:", error);
@@ -83,11 +82,9 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
   };
 
   const isLinkActive = (href: string) => {
-    // Exakte Übereinstimmung für /admin (Dashboard)
     if (href === "/admin") {
       return pathname === "/admin";
     }
-    // Für andere Links: exakt oder Unterseiten
     return pathname === href || pathname.startsWith(href + "/");
   };
 
@@ -98,7 +95,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
 
   return (
     <>
-      {/* Desktop Sidebar Toggle Button - Only visible when sidebar has content */}
+      {/* Desktop Sidebar Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`hidden md:flex fixed top-[85px] z-30 p-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-800 rounded-r-lg hover:bg-gray-100 dark:hover:bg-slate-800 transition-all duration-300 cursor-pointer shadow-md ${
@@ -112,16 +109,12 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         )}
       </button>
 
-      {/* Mobile Burger Menu Button - Only visible when sidebar has content */}
+      {/* Mobile Burger Menu Button */}
       <button
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         className="md:hidden fixed top-[85px] left-4 z-40 p-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg shadow-md transition-all duration-200 cursor-pointer"
       >
-        {isMobileOpen ? (
-          <X className="h-5 w-5" />
-        ) : (
-          <Menu className="h-5 w-5" />
-        )}
+        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Mobile Backdrop */}
@@ -132,14 +125,14 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         />
       )}
 
-      {/* Desktop Sidebar - Slides completely in/out */}
+      {/* Desktop Sidebar */}
       <aside
         className={`hidden md:flex md:flex-col fixed left-0 top-[73px] h-[calc(100vh-73px)] z-20 transition-all duration-300 ease-in-out bg-white dark:bg-slate-950 border-r border-gray-200 dark:border-gray-800 overflow-y-auto ${
           isOpen ? "w-64 translate-x-0" : "w-64 -translate-x-full"
         }`}
       >
         <div className="p-6 space-y-8">
-          {/* Search Filter Section - Only on product/category/search pages */}
+          {/* Search Filter Section */}
           {showSearchFilter && (
             <Suspense
               fallback={
@@ -152,7 +145,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
             </Suspense>
           )}
 
-          {/* Admin Section - Only in admin area */}
+          {/* Admin Section */}
           {isAdmin && isInAdminArea && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -194,7 +187,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Spacer for main content - pushes content when sidebar is open */}
+      {/* Spacer for main content */}
       <div
         className={`hidden md:block transition-all duration-300 ease-in-out shrink-0 ${
           isOpen ? "w-64" : "w-0"
@@ -210,7 +203,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         }`}
       >
         <div className="p-6 space-y-8">
-          {/* Search Filter Section - Only on product/category/search pages */}
+          {/* Search Filter Section */}
           {showSearchFilter && (
             <Suspense
               fallback={
@@ -223,7 +216,7 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
             </Suspense>
           )}
 
-          {/* Admin Section - Only in admin area */}
+          {/* Admin Section */}
           {isAdmin && isInAdminArea && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
