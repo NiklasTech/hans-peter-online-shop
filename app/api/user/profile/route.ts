@@ -151,7 +151,13 @@ export async function PUT(request: Request) {
     }
 
     // Build update data
-    const updateData: any = {};
+    const updateData: {
+      name?: string;
+      email?: string;
+      password?: string;
+      defaultSupplier?: string | null;
+      defaultPayment?: string | null;
+    } = {};
 
     if (name) updateData.name = name;
     if (email) updateData.email = email;

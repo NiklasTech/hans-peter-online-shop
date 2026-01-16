@@ -65,8 +65,9 @@ async function backupDatabase() {
     console.log('💡 Um das Backup auf einem anderen PC zu importieren:');
     console.log(`   npm run db:restore\n`);
 
-  } catch (error: any) {
-    console.error('❌ Fehler beim Erstellen des Backups:', error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Fehler beim Erstellen des Backups:', errorMessage);
     console.error('\n💡 Mögliche Ursachen:');
     console.error('1. Docker Desktop läuft nicht');
     console.error('2. PostgreSQL Container ist gestoppt');

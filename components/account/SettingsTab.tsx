@@ -18,11 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Lock, CreditCard, Truck, Trash2, AlertTriangle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Lock, CreditCard, Trash2, AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -41,7 +39,6 @@ interface SettingsTabProps {
 }
 
 export default function SettingsTab({ user, onUpdate }: SettingsTabProps) {
-  const router = useRouter();
   const [passwordSection, setPasswordSection] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

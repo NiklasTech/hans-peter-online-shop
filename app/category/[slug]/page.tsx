@@ -19,7 +19,7 @@ interface ProductData {
   id: string;
   name: string;
   price: number;
-  image: string | null;
+  image: string | null | undefined;
   rating: number;
 }
 
@@ -122,7 +122,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
         {/* Products */}
         {products.length > 0 ? (
-          <ProductSection products={products} />
+          <ProductSection products={products.map(p => ({ ...p, image: p.image ?? undefined }))} />
         ) : (
           <div className="text-center py-20 bg-gray-50 dark:bg-slate-900 rounded-2xl">
             <p className="text-gray-600 dark:text-gray-300 text-lg">

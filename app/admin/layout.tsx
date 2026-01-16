@@ -1,5 +1,4 @@
 import { getCurrentAdmin } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import Sidebar from "@/components/admin/Sidebar";
 import AccessDenied from "@/components/admin/AccessDenied";
 

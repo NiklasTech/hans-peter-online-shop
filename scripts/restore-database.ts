@@ -101,8 +101,9 @@ async function restoreDatabase() {
     console.log('\n✅ Datenbank erfolgreich wiederhergestellt!');
     console.log(`📁 Von: ${backupFile}\n`);
 
-  } catch (error: any) {
-    console.error('❌ Fehler beim Wiederherstellen:', error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('❌ Fehler beim Wiederherstellen:', errorMessage);
     console.error('\n💡 Mögliche Ursachen:');
     console.error('1. Docker Desktop läuft nicht');
     console.error('2. PostgreSQL Container ist gestoppt');

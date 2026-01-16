@@ -51,7 +51,7 @@ export interface CreateProductInput {
   details?: { key: string; value: string }[];
 }
 
-export interface UpdateProductInput extends Partial<CreateProductInput> {}
+export type UpdateProductInput = Partial<CreateProductInput>;
 
 export type ProductWithoutDates = Omit<Product, "createdAt" | "updatedAt">;
 

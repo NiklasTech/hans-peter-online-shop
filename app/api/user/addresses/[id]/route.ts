@@ -65,7 +65,16 @@ export async function PUT(
     }
 
     // Build update data
-    const updateData: any = {};
+    const updateData: {
+      firstName?: string;
+      lastName?: string;
+      street?: string;
+      houseNumber?: string;
+      city?: string;
+      postalCode?: string;
+      countryCode?: string;
+      phone?: string | null;
+    } = {};
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (street) updateData.street = street;

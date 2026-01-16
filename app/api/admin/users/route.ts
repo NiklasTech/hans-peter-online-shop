@@ -204,7 +204,14 @@ export async function PUT(request: Request) {
     }
 
     // Prepare update data
-    const updateData: any = {
+    const updateData: {
+      email: string;
+      name: string;
+      isAdmin: boolean;
+      defaultSupplier: string | null;
+      defaultPayment: string | null;
+      password?: string;
+    } = {
       email: email || existingUser.email,
       name: name || existingUser.name,
       isAdmin: isAdmin !== undefined ? isAdmin : existingUser.isAdmin,

@@ -22,7 +22,7 @@ export async function requireUserAuth(
     }
 
     // Attach user to request for use in handler
-    (req as any).user = user;
+    (req as NextRequest & { user: typeof user }).user = user;
     return handler(req);
   };
 }
@@ -44,7 +44,7 @@ export async function requireAdminAuth(
     }
 
     // Attach admin to request for use in handler
-    (req as any).admin = admin;
+    (req as NextRequest & { admin: typeof admin }).admin = admin;
     return handler(req);
   };
 }

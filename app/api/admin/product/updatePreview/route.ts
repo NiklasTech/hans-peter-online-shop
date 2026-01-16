@@ -54,11 +54,20 @@ export async function POST(request: Request) {
     // Process image
     const processor = new ImageProcessor(parsedProductId);
 
-    // Delete old preview image
-    await processor.deletePreviewImage(parsedProductId);
+    // Get current product to delete old preview if exists
+    const product = await db.product.findUnique({
+      where: { id: parsedProductId },
+      select: { previewImage: true },
+    });
+
+    // Delete old preview image if exists
+    if (product?.previewImage) {
+      await processor.deleteImageByUrl(product.previewImage);
+    }
 
     // Create new preview image
-    const previewImageUrl = await processor.createPreviewImage(file, parsedProductId);
+    const result = await processor.saveAsAvif(file);
+    const previewImageUrl = result.url;
 
     // Update product with new preview image
     await db.product.update({

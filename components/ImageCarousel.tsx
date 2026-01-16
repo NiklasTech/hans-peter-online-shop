@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -22,22 +22,21 @@ export default function ImageCarousel({
 }: ImageCarouselProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
-  const [cacheBustedImages, setCacheBustedImages] = useState<string[]>(images);
+  const [timestamp] = useState(() => Date.now());
 
   // Add cache buster only on client-side after hydration
-  useEffect(() => {
+  const cacheBustedImages = useMemo(() => {
     if (images.length > 0) {
-      const timestamp = Date.now();
-      const busted = images.map((img) => {
+      return images.map((img) => {
         if (!img || img.startsWith("data:") || img.startsWith("blob:")) {
           return img;
         }
         const separator = img.includes("?") ? "&" : "?";
         return `${img}${separator}v=${timestamp}`;
       });
-      setCacheBustedImages(busted);
     }
-  }, [images]);
+    return images;
+  }, [images, timestamp]);
 
   // Update selected index when carousel slides
   useEffect(() => {

@@ -62,7 +62,7 @@ interface Order {
   };
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any; description: string }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }>; description: string }> = {
   pending: {
     label: "Ausstehend",
     color: "bg-yellow-100 text-yellow-800 border-yellow-200",

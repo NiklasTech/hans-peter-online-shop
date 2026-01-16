@@ -14,6 +14,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
+  salePrice?: number;
   rating: number;
   reviewCount: number;
   inStock: boolean;
@@ -29,6 +30,54 @@ interface ProductPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+interface DbProductCategory {
+  category: {
+    name: string;
+  };
+}
+
+interface DbProductImage {
+  url: string;
+  previewUrl?: string;
+}
+
+interface DbProductDetail {
+  key: string;
+  value: string;
+}
+
+interface DbProductReview {
+  id: number;
+  user: {
+    name: string;
+  };
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  createdAt: string;
+  helpful: number;
+}
+
+interface DbProduct {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  salePrice?: number | null;
+  previewImage?: string | null;
+  stock: number;
+  sku: string;
+  categories: DbProductCategory[];
+  images: DbProductImage[];
+  details: DbProductDetail[];
+  reviews: DbProductReview[];
+  averageRating?: number;
+  reviewCount?: number;
+  brand?: {
+    name: string;
+  };
 }
 
 async function fetchProduct(id: string) {
@@ -58,7 +107,9 @@ async function fetchRelatedProducts(
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const response = await fetch(
-      `${baseUrl}/api/products/related?categoryIds=${categoryIds.join(",")}&excludeId=${currentProductId}&limit=${limit}`,
+      `${baseUrl}/api/products/related?categoryIds=${categoryIds.join(
+        ","
+      )}&excludeId=${currentProductId}&limit=${limit}`,
       {
         cache: "no-store",
       }
@@ -76,26 +127,28 @@ async function fetchRelatedProducts(
   }
 }
 
-function transformProductData(dbProduct: any): Product {
+function transformProductData(dbProduct: DbProduct): Product {
   // Transform categories to category string
   const categoryString = dbProduct.categories
-    .map((pc: any) => pc.category.name)
+    .map((pc) => pc.category.name)
     .join(" > ");
 
   // Transform images to string array - use url with previewUrl as fallback
-  const images = dbProduct.images.map((img: any) => img.url || img.previewUrl);
+  const images = dbProduct.images
+    .map((img) => img.url || img.previewUrl)
+    .filter((url): url is string => !!url);
 
   // Transform details to specifications object
   const specifications: Record<string, string> = {};
   if (dbProduct.brand) {
     specifications["Marke"] = dbProduct.brand.name;
   }
-  dbProduct.details.forEach((detail: any) => {
+  dbProduct.details.forEach((detail) => {
     specifications[detail.key] = detail.value;
   });
 
   // Transform reviews
-  const reviews: ProductReview[] = dbProduct.reviews.map((review: any) => ({
+  const reviews: ProductReview[] = dbProduct.reviews.map((review) => ({
     id: review.id.toString(),
     author: review.user.name,
     rating: review.rating,
@@ -166,7 +219,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const product = transformProductData(dbProduct);
 
   // Fetch related products based on categories
-  const categoryIds = dbProduct.categories.map((pc: any) => pc.categoryId);
+  const categoryIds = dbProduct.categories.map(
+    (pc: { categoryId: number }) => (pc as { categoryId: number }).categoryId
+  );
   const dbRelatedProducts = await fetchRelatedProducts(
     categoryIds,
     dbProduct.id,
@@ -174,12 +229,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   // Transform related products
-  const relatedProducts = dbRelatedProducts.map((rp: any) => ({
+  const relatedProducts = dbRelatedProducts.map((rp: DbProduct) => ({
     id: rp.id.toString(),
     name: rp.name,
     price: rp.price,
     salePrice: rp.salePrice || undefined,
-    image: rp.previewImage || (rp.images[0]?.url || ""),
+    image: rp.previewImage || rp.images[0]?.url || "",
     rating: rp.averageRating || 0,
   }));
 
