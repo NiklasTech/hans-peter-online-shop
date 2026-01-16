@@ -29,6 +29,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               include: {
                 images: true,
                 brand: true,
+                reviews: {
+                  select: { rating: true },
+                },
               },
             },
           },
@@ -44,14 +47,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Produkte aus der Kategorie extrahieren und transformieren
-    const products = category.products.map((pc) => ({
-      id: pc.product.id.toString(),
-      name: pc.product.name,
-      price: pc.product.price,
-      image: pc.product.previewImage || pc.product.images[0]?.url || null,
-      rating: pc.product.averageRating || 0,
-      brand: pc.product.brand?.name || null,
-    }));
+    const products = category.products.map((pc) => {
+      const reviews = pc.product.reviews;
+      const averageRating = reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
+
+      return {
+        id: pc.product.id.toString(),
+        name: pc.product.name,
+        price: pc.product.price,
+        image: pc.product.previewImage || pc.product.images[0]?.url || null,
+        rating: Math.round(averageRating * 10) / 10,
+        brand: pc.product.brand?.name || null,
+      };
+    });
 
     return NextResponse.json({
       category: {
