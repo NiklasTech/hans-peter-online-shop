@@ -10,9 +10,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Users, Clock, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Users, Clock } from "lucide-react";
 import { ChatList } from "@/components/admin/support/ChatList";
 import { ChatView } from "@/components/admin/support/ChatView";
 import { useSocket } from "@/hooks/useSocket";

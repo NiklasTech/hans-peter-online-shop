@@ -2,7 +2,7 @@
 
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import WishlistButton from "@/components/WishlistButton";
 
 interface ProductCardProps {
@@ -25,15 +25,16 @@ export default function ProductCard({
   const isOnSale = salePrice !== undefined && salePrice !== null && salePrice < (price || 0);
   const displayPrice = isOnSale ? salePrice : price;
   const discountPercent = isOnSale && price ? Math.round((1 - salePrice / price) * 100) : 0;
-  const [cacheBustedImage, setCacheBustedImage] = useState<string | undefined>(image);
+  const [timestamp] = useState(() => Date.now());
 
   // Add cache buster only on client-side after hydration
-  useEffect(() => {
+  const cacheBustedImage = useMemo(() => {
     if (image && !image.startsWith('data:') && !image.startsWith('blob:')) {
       const separator = image.includes('?') ? '&' : '?';
-      setCacheBustedImage(`${image}${separator}v=${Date.now()}`);
+      return `${image}${separator}v=${timestamp}`;
     }
-  }, [image]);
+    return image;
+  }, [image, timestamp]);
 
   return (
     <Link href={`/product/${id}`} className="group cursor-pointer block">

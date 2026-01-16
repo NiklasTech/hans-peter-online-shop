@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, MapPin, Settings, Package, Heart } from "lucide-react";
@@ -20,8 +20,29 @@ interface UserProfile {
   defaultAddressId: number | null;
   defaultSupplier: string | null;
   defaultPayment: string | null;
-  defaultAddress: any | null;
-  addresses: any[];
+  defaultAddress: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    street: string;
+    houseNumber: string;
+    city: string;
+    postalCode: string;
+    countryCode: string;
+    phone: string | null;
+  } | null;
+  addresses: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    street: string;
+    houseNumber: string;
+    city: string;
+    postalCode: string;
+    countryCode: string;
+    phone: string | null;
+    createdAt: string;
+  }[];
 }
 
 export default function AccountPage() {

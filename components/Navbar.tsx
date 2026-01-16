@@ -74,6 +74,22 @@ interface SearchProduct {
   categories?: string[];
 }
 
+interface CartItem {
+  id: number;
+  productId: number;
+  quantity: number;
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    salePrice?: number | null;
+    previewImage: string | null;
+    brand?: {
+      name: string;
+    } | null;
+  };
+}
+
 export default function Navbar() {
   const router = useRouter();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
@@ -81,12 +97,11 @@ export default function Navbar() {
   const [user, setUser] = useState<UserData | null>(null);
   const [hasAdminSession, setHasAdminSession] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(0);
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
   // Search states
@@ -95,7 +110,7 @@ export default function Navbar() {
   const [isSearching, setIsSearching] = useState(false);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLFormElement>(null);
 
   // Form states
   const [loginEmail, setLoginEmail] = useState("");

@@ -19,7 +19,7 @@ export interface CreateCategoryInput {
   image?: string;
 }
 
-export interface UpdateCategoryInput extends Partial<CreateCategoryInput> {}
+export type UpdateCategoryInput = Partial<CreateCategoryInput>;
 
 export type CategoryWithoutDates = Omit<Category, "createdAt" | "updatedAt">;
 

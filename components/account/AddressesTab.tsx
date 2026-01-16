@@ -53,8 +53,9 @@ export default function AddressesTab({ addresses, defaultAddressId, onUpdate }: 
       }
 
       onUpdate();
-    } catch (err: any) {
-      alert(err.message || "Failed to set default address");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to set default address";
+      alert(message);
     }
   };
 
@@ -75,8 +76,9 @@ export default function AddressesTab({ addresses, defaultAddressId, onUpdate }: 
       }
 
       onUpdate();
-    } catch (err: any) {
-      alert(err.message || "Failed to delete address");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to delete address";
+      alert(message);
     } finally {
       setDeletingId(null);
     }

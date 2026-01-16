@@ -6,7 +6,7 @@ import { getCurrentUser, getCurrentAdmin } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     // Try to get user from either user or admin session
-    let user = await getCurrentUser();
+    const user = await getCurrentUser();
     let userId: number | null = null;
 
     if (user) {
@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Try to get user from either user or admin session
-    let user = await getCurrentUser();
+    const user = await getCurrentUser();
     let userId: number | null = null;
 
     if (user) {

@@ -306,12 +306,12 @@ async function checkCircularReference(categoryId: number, potentialParentId: num
       return true; // Circular reference found
     }
 
-    const parent = await db.category.findUnique({
+    const parent: { parentId: number | null } | null = await db.category.findUnique({
       where: { id: currentId },
       select: { parentId: true },
     });
 
-    currentId = parent?.parentId || null;
+    currentId = parent?.parentId ?? null;
   }
 
   return false;

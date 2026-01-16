@@ -815,7 +815,7 @@ async function main() {
 
   // Marken erstellen
   console.log('\n🏷️  Creating brands...');
-  const brandsMap = new Map<string, any>();
+  const brandsMap = new Map<string, { id: number; name: string }>();
   for (const brandName of BRANDS) {
     const brand = await prisma.brand.upsert({
       where: { name: brandName },
@@ -825,7 +825,10 @@ async function main() {
         description: `${brandName} Produkte`,
       },
     });
-    brandsMap.set(brandName, brand);
+    brandsMap.set(brandName, {
+      id: brand.id,
+      name: brand.name,
+    });
   }
   console.log(`  ✓ Created ${brandsMap.size} brands`);
 

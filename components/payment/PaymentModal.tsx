@@ -156,7 +156,7 @@ export function PaymentModal({ isOpen, paymentMethod, total, onComplete, onCance
                     }
                   </p>
                   <p className="text-sm text-gray-500">
-                    Klicke auf "Jetzt bezahlen" um fortzufahren
+                    Klicke auf &quot;Jetzt bezahlen&quot; um fortzufahren
                   </p>
                 </div>
               ) : (

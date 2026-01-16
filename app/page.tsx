@@ -50,8 +50,8 @@ export default async function Home() {
     })
   ]);
 
-  // Zufällige 5 Marken auswählen
-  const shuffledBrands = [...brands].sort(() => Math.random() - 0.5).slice(0, 5);
+  // Zufällige 5 Marken auswählen (deterministisch für SSR)
+  const shuffledBrands = brands.slice(0, 5);
 
   // Transformiere Produkte für ProductSection
   const transformProducts = (products: typeof featuredProducts) =>

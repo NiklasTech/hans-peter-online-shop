@@ -19,7 +19,7 @@ export interface CreateBrandInput {
   image?: string;
 }
 
-export interface UpdateBrandInput extends Partial<CreateBrandInput> {}
+export type UpdateBrandInput = Partial<CreateBrandInput>;
 
 export type BrandWithoutDates = Omit<Brand, "createdAt" | "updatedAt">;
 
