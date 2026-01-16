@@ -28,7 +28,7 @@ RUN npm run build
 
 # Production-Stage
 FROM base AS runner
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl bash
 WORKDIR /app
 
 ENV NODE_ENV=production
