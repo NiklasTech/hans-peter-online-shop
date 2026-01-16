@@ -279,7 +279,10 @@ export class ImageProcessor {
     }
 
     try {
-      const fullPath = path.join(this.basePath, url);
+      // URL starts with /productImages/..., basePath is public/productImages
+      // Remove the /productImages prefix from URL to avoid duplication
+      const cleanUrl = url.startsWith('/productImages/') ? url.replace('/productImages/', '') : url;
+      const fullPath = path.join(this.basePath, cleanUrl);
       await fs.unlink(fullPath);
       console.log(`Deleted image: ${fullPath}`);
     } catch (error) {

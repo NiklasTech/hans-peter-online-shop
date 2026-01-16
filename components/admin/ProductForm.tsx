@@ -71,6 +71,7 @@ export default function ProductForm({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [salePrice, setSalePrice] = useState("");
   const [stock, setStock] = useState("");
   const [categoryRows, setCategoryRows] = useState<CategoryRow[]>([]);
   const [brandName, setBrandName] = useState("");
@@ -216,6 +217,7 @@ export default function ProductForm({
       setName(product.name);
       setDescription(product.description || "");
       setPrice(product.price.toString());
+      setSalePrice(product.salePrice?.toString() || "");
       setStock(product.stock.toString());
 
       // Load categories
@@ -602,6 +604,7 @@ export default function ProductForm({
         name: name.trim(),
         description: description.trim() || null,
         price: parseFloat(price),
+        salePrice: salePrice.trim() ? parseFloat(salePrice) : null,
         stock: parseInt(stock),
         categoryIds: validCategories.map((row) => row.categoryId!),
         brandId: brandId,
@@ -695,7 +698,7 @@ export default function ProductForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="price" className="m-1">Preis (€) *</Label>
               <Input
@@ -708,6 +711,34 @@ export default function ProductForm({
                 placeholder="99.99"
                 required
               />
+            </div>
+
+            <div>
+              <Label htmlFor="discountPercent" className="m-1">Rabatt (%)</Label>
+              <Input
+                id="discountPercent"
+                type="number"
+                step="1"
+                min="0"
+                max="99"
+                value={salePrice && price ? Math.round((1 - parseFloat(salePrice) / parseFloat(price)) * 100) || "" : ""}
+                onChange={(e) => {
+                  const percent = parseInt(e.target.value);
+                  if (isNaN(percent) || percent <= 0) {
+                    setSalePrice("");
+                  } else if (percent < 100 && price) {
+                    const newSalePrice = parseFloat(price) * (1 - percent / 100);
+                    setSalePrice(newSalePrice.toFixed(2));
+                  }
+                }}
+                placeholder="0 = kein Rabatt"
+                className={salePrice && parseFloat(salePrice) < parseFloat(price) ? "border-red-400 bg-red-50" : ""}
+              />
+              {salePrice && parseFloat(salePrice) < parseFloat(price) && (
+                <p className="text-xs text-red-600 mt-1">
+                  Neuer Preis: €{parseFloat(salePrice).toFixed(2)}
+                </p>
+              )}
             </div>
 
             <div>

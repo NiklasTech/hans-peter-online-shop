@@ -55,8 +55,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // Calculate total and shipping
-    const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    // Helper function to get effective price (salePrice if available, otherwise price)
+    const getEffectivePrice = (product: { price: number; salePrice?: number | null }) => {
+      return product.salePrice !== null && product.salePrice !== undefined
+        ? product.salePrice
+        : product.price;
+    };
+
+    // Calculate total and shipping using effective prices (with sale discounts)
+    const subtotal = cartItems.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
     const shippingCost = subtotal > 50 ? 0 : 4.99;
     const total = subtotal + shippingCost;
 
@@ -91,7 +98,7 @@ export async function POST(request: Request) {
             orderId: newOrder.id,
             productId: item.productId,
             quantity: item.quantity,
-            price: item.product.price,
+            price: getEffectivePrice(item.product), // Use sale price if available
           },
         });
 

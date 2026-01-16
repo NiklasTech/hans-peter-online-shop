@@ -9,6 +9,7 @@ interface WishlistProduct {
   id: number;
   name: string;
   price: number;
+  salePrice?: number | null;
   previewImage: string | null;
   stock: number;
   brand: {
@@ -204,6 +205,11 @@ export default function WishlistPage() {
               {/* Product Image */}
               <Link href={`/product/${item.productId}`}>
                 <div className="relative aspect-square bg-gray-100 dark:bg-slate-700">
+                  {item.product.salePrice !== null && item.product.salePrice !== undefined && (
+                    <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      -{Math.round((1 - item.product.salePrice / item.product.price) * 100)}%
+                    </div>
+                  )}
                   {item.product.previewImage ? (
                     <img
                       src={item.product.previewImage}
@@ -230,9 +236,25 @@ export default function WishlistPage() {
                 </Link>
 
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    €{item.product.price.toFixed(2)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {item.product.salePrice !== null && item.product.salePrice !== undefined ? (
+                      <>
+                        <span className="text-lg font-bold text-red-600 dark:text-red-500">
+                          €{item.product.salePrice.toFixed(2)}
+                        </span>
+                        <span className="text-sm text-gray-400 line-through">
+                          €{item.product.price.toFixed(2)}
+                        </span>
+                        <span className="text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded font-medium">
+                          -{Math.round((1 - item.product.salePrice / item.product.price) * 100)}%
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-lg font-bold text-gray-900 dark:text-white">
+                        €{item.product.price.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                   {item.product.stock > 0 ? (
                     <span className="text-sm text-green-600 dark:text-green-400">
                       Auf Lager

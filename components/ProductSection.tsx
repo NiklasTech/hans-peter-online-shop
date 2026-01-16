@@ -6,6 +6,7 @@ interface Product {
   id: string;
   name: string;
   price?: number;
+  salePrice?: number;
   image?: string;
   rating?: number;
 }
@@ -34,6 +35,7 @@ export default function ProductSection({
             id={product.id}
             name={product.name}
             price={product.price}
+            salePrice={product.salePrice}
             image={product.image}
             rating={product.rating}
           />

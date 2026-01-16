@@ -82,8 +82,8 @@ function transformProductData(dbProduct: any): Product {
     .map((pc: any) => pc.category.name)
     .join(" > ");
 
-  // Transform images to string array
-  const images = dbProduct.images.map((img: any) => img.url);
+  // Transform images to string array - use url with previewUrl as fallback
+  const images = dbProduct.images.map((img: any) => img.url || img.previewUrl);
 
   // Transform details to specifications object
   const specifications: Record<string, string> = {};
@@ -113,6 +113,7 @@ function transformProductData(dbProduct: any): Product {
     id: dbProduct.id.toString(),
     name: dbProduct.name,
     price: dbProduct.price,
+    salePrice: dbProduct.salePrice || undefined,
     rating: dbProduct.averageRating || 0,
     reviewCount: dbProduct.reviewCount || 0,
     inStock: dbProduct.stock > 0,
@@ -177,6 +178,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     id: rp.id.toString(),
     name: rp.name,
     price: rp.price,
+    salePrice: rp.salePrice || undefined,
     image: rp.previewImage || (rp.images[0]?.url || ""),
     rating: rp.averageRating || 0,
   }));

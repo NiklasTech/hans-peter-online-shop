@@ -40,9 +40,8 @@ export default async function Home() {
       }
     }),
 
-    // Marken mit Image
+    // Alle Marken laden (für zufällige Auswahl)
     db.brand.findMany({
-      take: 5,
       include: {
         _count: {
           select: { products: true }
@@ -51,12 +50,16 @@ export default async function Home() {
     })
   ]);
 
+  // Zufällige 5 Marken auswählen
+  const shuffledBrands = [...brands].sort(() => Math.random() - 0.5).slice(0, 5);
+
   // Transformiere Produkte für ProductSection
   const transformProducts = (products: typeof featuredProducts) =>
     products.map(p => ({
       id: p.id.toString(),
       name: p.name,
       price: p.price,
+      salePrice: p.salePrice || undefined,
       rating: p.reviews.length > 0
         ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length
         : 0,
@@ -71,8 +74,8 @@ export default async function Home() {
     image: c.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=60'
   }));
 
-  // Transformiere Marken
-  const transformedBrands = brands.map(b => ({
+  // Transformiere Marken (zufällige Auswahl)
+  const transformedBrands = shuffledBrands.map(b => ({
     id: b.id.toString(),
     name: b.name,
     description: b.description || `${b._count.products} Produkte`,
@@ -90,9 +93,13 @@ export default async function Home() {
 
           <div className="mb-12">
             <Banner
-              title="Sommerkollektion"
-              subtitle="Jetzt bis zu 50% Rabatt"
+              title="Summer Sale"
+              subtitle="Bis zu 50% Rabatt auf ausgewählte Artikel"
               height="medium"
+              variant="sale"
+              badge="Limitiert"
+              ctaText="Jetzt shoppen"
+              ctaLink="/search?discount=true"
             />
           </div>
 
@@ -103,9 +110,12 @@ export default async function Home() {
 
           <div className="mb-12">
             <Banner
-              title="Kategorien erkunden"
-              subtitle="Finden Sie genau das, was Sie suchen"
-              height="medium"
+              title="Kostenloser Versand"
+              subtitle="Bei Bestellungen ab 50€ - schnell & zuverlässig"
+              height="small"
+              variant="promo"
+              ctaText="Mehr erfahren"
+              ctaLink="/shipping"
             />
           </div>
 
@@ -116,9 +126,13 @@ export default async function Home() {
 
           <div className="mb-12">
             <Banner
-              title="Exklusive Marken"
-              subtitle="Entdecken Sie unsere Top-Hersteller"
+              title="Premium Qualität"
+              subtitle="Entdecken Sie unsere exklusiven Markenprodukte"
               height="medium"
+              variant="brand"
+              badge="Exklusiv"
+              ctaText="Marken entdecken"
+              ctaLink="/brands"
             />
           </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 
 interface Brand {
   id: string;
@@ -28,9 +29,10 @@ export function BrandSection({
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6">
         {brands.map((brand) => (
-          <div
+          <Link
             key={brand.id}
-            className="group cursor-pointer"
+            href={`/search?brands=${brand.id}`}
+            className="group cursor-pointer block"
           >
             {/* Brand Logo */}
             <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-700 dark:to-slate-800 rounded-2xl overflow-hidden aspect-square mb-4 flex items-center justify-center p-6">
@@ -66,7 +68,7 @@ export function BrandSection({
                 </p>
               )}
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

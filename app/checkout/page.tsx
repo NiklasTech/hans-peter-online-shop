@@ -32,6 +32,7 @@ interface CartItem {
     id: number;
     name: string;
     price: number;
+    salePrice?: number | null;
     previewImage: string | null;
     stock: number;
     brand: {
@@ -191,8 +192,14 @@ export default function CheckoutPage() {
     }).format(price);
   };
 
+  const getEffectivePrice = (product: CartItem["product"]) => {
+    return product.salePrice !== null && product.salePrice !== undefined
+      ? product.salePrice
+      : product.price;
+  };
+
   const calculateTotal = () => {
-    return cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    return cartItems.reduce((sum, item) => sum + getEffectivePrice(item.product) * item.quantity, 0);
   };
 
   const calculateShipping = () => {
@@ -352,9 +359,25 @@ export default function CheckoutPage() {
                           </h3>
                         </Link>
                         <p className="text-sm text-gray-600 dark:text-gray-400">{item.product.brand.name}</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-white mt-2">
-                          {formatPrice(item.product.price)}
-                        </p>
+                        <div className="mt-2 flex items-center gap-2">
+                          {item.product.salePrice !== null && item.product.salePrice !== undefined ? (
+                            <>
+                              <p className="text-lg font-bold text-red-600 dark:text-red-500">
+                                {formatPrice(item.product.salePrice)}
+                              </p>
+                              <p className="text-sm text-gray-500 line-through">
+                                {formatPrice(item.product.price)}
+                              </p>
+                              <span className="text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded font-medium">
+                                -{Math.round((1 - item.product.salePrice / item.product.price) * 100)}%
+                              </span>
+                            </>
+                          ) : (
+                            <p className="text-lg font-bold text-gray-900 dark:text-white">
+                              {formatPrice(item.product.price)}
+                            </p>
+                          )}
+                        </div>
                         {item.product.stock < 5 && (
                           <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                             Nur noch {item.product.stock} auf Lager
@@ -505,14 +528,25 @@ export default function CheckoutPage() {
                   <div>
                     <h3 className="font-semibold mb-3">Artikel ({cartItems.length})</h3>
                     <div className="space-y-2">
-                      {cartItems.map((item) => (
-                        <div key={item.id} className="flex justify-between text-sm">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            {item.quantity}x {item.product.name}
-                          </span>
-                          <span className="font-semibold">{formatPrice(item.product.price * item.quantity)}</span>
-                        </div>
-                      ))}
+                      {cartItems.map((item) => {
+                        const effectivePrice = getEffectivePrice(item.product);
+                        const isOnSale = item.product.salePrice !== null && item.product.salePrice !== undefined;
+                        return (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              {item.quantity}x {item.product.name}
+                              {isOnSale && (
+                                <span className="ml-1 text-red-600 dark:text-red-400 text-xs">
+                                  (-{Math.round((1 - item.product.salePrice! / item.product.price) * 100)}%)
+                                </span>
+                              )}
+                            </span>
+                            <span className={`font-semibold ${isOnSale ? "text-red-600 dark:text-red-500" : ""}`}>
+                              {formatPrice(effectivePrice * item.quantity)}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
