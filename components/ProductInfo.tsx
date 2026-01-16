@@ -10,6 +10,7 @@ interface ProductInfoProps {
   productId: number;
   name: string;
   price: number;
+  salePrice?: number;
   rating: number;
   reviewCount: number;
   description: string;
@@ -22,6 +23,7 @@ export default function ProductInfo({
   productId,
   name,
   price,
+  salePrice,
   rating,
   reviewCount,
   description,
@@ -33,6 +35,10 @@ export default function ProductInfo({
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [addedToCart, setAddedToCart] = useState(false);
+
+  const isOnSale = salePrice !== undefined && salePrice !== null && salePrice < price;
+  const displayPrice = isOnSale ? salePrice : price;
+  const discountPercent = isOnSale ? Math.round((1 - salePrice / price) * 100) : 0;
 
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
@@ -127,8 +133,18 @@ export default function ProductInfo({
 
       {/* Price */}
       <div className="space-y-2">
-        <div className="text-4xl font-bold text-gray-900 dark:text-white">
-          €{price.toFixed(2)}
+        {isOnSale && (
+          <div className="flex items-center gap-3">
+            <span className="text-xl text-gray-500 dark:text-gray-400 line-through">
+              €{price.toFixed(2)}
+            </span>
+            <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-full">
+              -{discountPercent}% SALE
+            </span>
+          </div>
+        )}
+        <div className={`text-4xl font-bold ${isOnSale ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>
+          €{displayPrice.toFixed(2)}
         </div>
         {inStock ? (
           <div className="text-sm font-medium text-green-600 dark:text-green-400">

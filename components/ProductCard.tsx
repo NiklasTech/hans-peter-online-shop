@@ -9,6 +9,7 @@ interface ProductCardProps {
   id?: string;
   name: string;
   price?: number;
+  salePrice?: number;
   image?: string;
   rating?: number;
 }
@@ -17,9 +18,13 @@ export default function ProductCard({
   id = "1",
   name,
   price,
+  salePrice,
   image,
   rating = 5,
 }: ProductCardProps) {
+  const isOnSale = salePrice !== undefined && salePrice !== null && salePrice < (price || 0);
+  const displayPrice = isOnSale ? salePrice : price;
+  const discountPercent = isOnSale && price ? Math.round((1 - salePrice / price) * 100) : 0;
   const [cacheBustedImage, setCacheBustedImage] = useState<string | undefined>(image);
 
   // Add cache buster only on client-side after hydration
@@ -43,6 +48,13 @@ export default function ProductCard({
         ) : (
           <div className="text-gray-400 dark:text-gray-600 text-center px-4">
             <p className="text-sm font-medium">Produktbild</p>
+          </div>
+        )}
+
+        {/* Sale Badge */}
+        {isOnSale && (
+          <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+            -{discountPercent}%
           </div>
         )}
 
@@ -78,11 +90,18 @@ export default function ProductCard({
         )}
 
         {/* Price */}
-        <p className="text-lg font-bold text-gray-900 dark:text-white">
-          {typeof price === "number"
-            ? `€${price.toFixed(2)}`
-            : "Preis auf Anfrage"}
-        </p>
+        <div className="flex items-center gap-2">
+          {isOnSale && typeof price === "number" && (
+            <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+              €{price.toFixed(2)}
+            </span>
+          )}
+          <span className={`text-lg font-bold ${isOnSale ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}`}>
+            {typeof displayPrice === "number"
+              ? `€${displayPrice.toFixed(2)}`
+              : "Preis auf Anfrage"}
+          </span>
+        </div>
       </div>
     </Link>
   );

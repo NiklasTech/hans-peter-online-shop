@@ -705,9 +705,22 @@ export default function Navbar() {
                                     {item.product.brand?.name}
                                   </p>
                                   <div className="flex items-center justify-between mt-1">
-                                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                                      {formatPrice(item.product.price)}
-                                    </span>
+                                    <div className="flex items-center gap-1.5">
+                                      {item.product.salePrice !== null && item.product.salePrice !== undefined ? (
+                                        <>
+                                          <span className="text-sm font-semibold text-red-600 dark:text-red-500">
+                                            {formatPrice(item.product.salePrice)}
+                                          </span>
+                                          <span className="text-xs text-gray-400 line-through">
+                                            {formatPrice(item.product.price)}
+                                          </span>
+                                        </>
+                                      ) : (
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                          {formatPrice(item.product.price)}
+                                        </span>
+                                      )}
+                                    </div>
                                     <span className="text-xs text-gray-500 dark:text-gray-400">
                                       Menge: {item.quantity}
                                     </span>
@@ -725,7 +738,7 @@ export default function Navbar() {
                                 {formatPrice(
                                   cartItems.reduce(
                                     (sum, item) =>
-                                      sum + item.product.price * item.quantity,
+                                      sum + (item.product.salePrice ?? item.product.price) * item.quantity,
                                     0
                                   )
                                 )}

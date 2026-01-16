@@ -101,7 +101,7 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, name, description, price, stock, categoryIds, brandId, images, details } = body;
+    const { id, name, description, price, salePrice, stock, categoryIds, brandId, images, details } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -138,6 +138,7 @@ export async function PUT(request: Request) {
         name: name !== undefined ? name : undefined,
         description: description !== undefined ? description : undefined,
         price: price !== undefined ? parseFloat(price) : undefined,
+        salePrice: salePrice !== undefined ? (salePrice === null ? null : parseFloat(salePrice)) : undefined,
         stock: stock !== undefined ? parseInt(stock) : undefined,
         brandId: brandId !== undefined ? parseInt(brandId) : undefined,
         images: images
@@ -244,7 +245,7 @@ export async function DELETE(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, description, price, stock, categoryIds, brandId, images, details } = body;
+    const { name, description, price, salePrice, stock, categoryIds, brandId, images, details } = body;
 
     // Validierung
     if (!name || price === undefined || stock === undefined || !categoryIds || categoryIds.length === 0 || !brandId) {
@@ -260,6 +261,7 @@ export async function POST(request: Request) {
         name,
         description: description || null,
         price: parseFloat(price),
+        salePrice: salePrice ? parseFloat(salePrice) : null,
         stock: parseInt(stock),
         brandId: parseInt(brandId),
         previewImage: null, // Will be set automatically when first image is uploaded

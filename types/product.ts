@@ -24,6 +24,7 @@ export interface Product {
   name: string;
   description?: string | null;
   price: number;
+  salePrice?: number | null;
   previewImage?: string | null;
   stock: number;
   sku?: string | null;
@@ -40,6 +41,7 @@ export interface CreateProductInput {
   name: string;
   description?: string;
   price: number;
+  salePrice?: number | null;
   stock: number;
   sku?: string;
   categoryIds: number[];

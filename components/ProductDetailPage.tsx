@@ -11,6 +11,7 @@ export interface ProductDetailPageProps {
     id: string;
     name: string;
     price: number;
+    salePrice?: number;
     rating: number;
     reviewCount: number;
     inStock: boolean;
@@ -35,6 +36,7 @@ export interface ProductDetailPageProps {
     id: string;
     name: string;
     price: number;
+    salePrice?: number;
     image: string;
     rating: number;
   }>;
@@ -65,6 +67,7 @@ export default function ProductDetailPage({
               productId={Number(product.id)}
               name={product.name}
               price={product.price}
+              salePrice={product.salePrice}
               rating={product.rating}
               reviewCount={product.reviewCount}
               description={product.description}

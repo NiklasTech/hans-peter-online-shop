@@ -74,7 +74,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, description, price, stock, categoryIds, brandId, previewImage, images, details } = body;
+    const { name, description, price, salePrice, stock, categoryIds, brandId, previewImage, images, details } = body;
 
     // Check if product exists and fetch current images
     const existingProduct = await db.product.findUnique({
@@ -103,6 +103,7 @@ export async function PUT(
         name: name !== undefined ? name : undefined,
         description: description !== undefined ? description : undefined,
         price: price !== undefined ? parseFloat(price) : undefined,
+        salePrice: salePrice !== undefined ? (salePrice === null ? null : parseFloat(salePrice)) : undefined,
         stock: stock !== undefined ? parseInt(stock) : undefined,
         brandId: brandId !== undefined ? parseInt(brandId) : undefined,
         previewImage: previewImage !== undefined ? previewImage : undefined,
