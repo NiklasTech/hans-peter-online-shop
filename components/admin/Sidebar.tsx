@@ -28,6 +28,7 @@ const adminLinks = [
   { name: "Kategorien", href: "/admin/categories", icon: Grid3X3 },
   { name: "Marken", href: "/admin/brands", icon: Palette },
   { name: "Benutzer", href: "/admin/users", icon: Users },
+  { name: "Bestellungen", href: "/admin/orders", icon: Package },
   { name: "Support", href: "/admin/support", icon: MessageSquare },
 ];
 
@@ -114,7 +115,11 @@ export default function Sidebar({ isAdmin = false }: SidebarProps) {
         onClick={() => setIsMobileOpen(!isMobileOpen)}
         className="md:hidden fixed top-[85px] left-4 z-40 p-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg shadow-md transition-all duration-200 cursor-pointer"
       >
-        {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        {isMobileOpen ? (
+          <X className="h-5 w-5" />
+        ) : (
+          <Menu className="h-5 w-5" />
+        )}
       </button>
 
       {/* Mobile Backdrop */}
