@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/admin/Sidebar";
 import { getCurrentAdmin } from "@/lib/auth";
 import { ChatWidget } from "@/components/chat/ChatWidget";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial"],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +30,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} antialiased font-sans`}
       >
         <div className="flex flex-col h-screen">
           <Navbar />
