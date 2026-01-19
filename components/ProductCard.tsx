@@ -2,6 +2,7 @@
 
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import WishlistButton from "@/components/WishlistButton";
 
 interface ProductCardProps {
@@ -24,6 +25,17 @@ export default function ProductCard({
   const isOnSale = salePrice !== undefined && salePrice !== null && salePrice < (price || 0);
   const displayPrice = isOnSale ? salePrice : price;
   const discountPercent = isOnSale && price ? Math.round((1 - salePrice / price) * 100) : 0;
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Wait for client-side hydration before adding cache buster
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Use original image during SSR and initial hydration, add cache buster only after mount
+  const cacheBustedImage = isMounted && image && !image.startsWith('data:') && !image.startsWith('blob:')
+    ? `${image}${image.includes('?') ? '&' : '?'}v=${Date.now()}`
+    : image;
 
   return (
     <Link href={`/product/${id}`} className="group cursor-pointer block">
@@ -66,7 +78,7 @@ export default function ProductCard({
         </h3>
 
         {/* Rating */}
-        {rating && (
+        {rating !== undefined && rating > 0 && (
           <div className="flex items-center gap-1 mb-2">
             <div className="flex text-yellow-400">
               {[...Array(5)].map((_, i) => (
