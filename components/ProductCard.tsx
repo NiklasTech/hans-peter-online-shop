@@ -41,9 +41,9 @@ export default function ProductCard({
     <Link href={`/product/${id}`} className="group cursor-pointer block">
       {/* Image Container */}
       <div className="relative bg-gray-200 dark:bg-slate-800 rounded-2xl overflow-hidden aspect-square mb-4 flex items-center justify-center">
-        {cacheBustedImage ? (
+        {image ? (
           <img
-            src={cacheBustedImage}
+            src={image}
             alt={name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

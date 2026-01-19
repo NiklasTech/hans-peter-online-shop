@@ -258,8 +258,8 @@ export function ChatWidget() {
         }))
     : [];
 
-  // Don't show widget if user is not logged in
-  if (!user) {
+  // Don't show widget if user is not logged in or is an admin
+  if (!user || user.isAdmin) {
     return null;
   }
 
