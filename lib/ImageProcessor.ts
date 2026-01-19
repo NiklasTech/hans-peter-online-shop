@@ -278,6 +278,12 @@ export class ImageProcessor {
         return;
     }
 
+    // Skip deletion for external URLs (http/https)
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      console.log(`Skipping deletion of external URL: ${url}`);
+      return;
+    }
+
     try {
       // URL starts with /productImages/..., basePath is public/productImages
       // Remove the /productImages prefix from URL to avoid duplication
