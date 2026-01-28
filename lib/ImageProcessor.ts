@@ -170,8 +170,9 @@ export class ImageProcessor {
   ): Promise<SavedImage> {
     const buffer = await this.fileToBuffer(file);
     const filename = path.parse(file.name).name;
-    const relativePath = path.join(this.generatePath(buffer), `${filename}.${imageType}`);
-    const relativePreviewPath = relativePath.replace(`.${imageType}`, `_preview.${imageType}`)
+    const filePath = this.generatePath(buffer);
+    const relativePath = path.join(filePath, `${filename}.${imageType}`);
+    const relativePreviewPath = path.join(filePath, `preview_${filename}.${imageType}`)
     const fullPath = path.join(this.basePath, relativePath);
     const previewPath = path.join(this.basePath, relativePreviewPath);
 
