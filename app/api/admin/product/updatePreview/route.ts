@@ -5,7 +5,6 @@
  */
 
 import { NextResponse } from "next/server";
-import { ImageProcessor } from "@/lib/ImageProcessor";
 import { db } from "@/lib/db";
 
 export async function POST(request: Request) {
@@ -26,8 +25,8 @@ export async function POST(request: Request) {
     const firstImage = await db.productImage.findFirst({
       where: {
         productId: parsedProductId,
-        index: 0
       },
+      orderBy: { index: "asc" }
     });
 
     if (!firstImage) {
@@ -37,45 +36,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Download the image from URL
-    const response = await fetch(firstImage.url);
-    if (!response.ok) {
-      throw new Error("Failed to fetch image");
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Create a File object from buffer
-    const file = new File([buffer], `preview_${parsedProductId}`, {
-      type: "image/avif",
-    });
-
-    // Process image
-    const processor = new ImageProcessor(parsedProductId);
-
-    // Get current product to delete old preview if exists
-    const product = await db.product.findUnique({
-      where: { id: parsedProductId },
-      select: { previewImage: true },
-    });
-
-    // Delete old preview image if exists
-    if (product?.previewImage) {
-      await processor.deleteImageByUrl(product.previewImage);
-    }
-
-    // Create new preview image
-    const result = await processor.saveAsAvif(file);
-    const previewImageUrl = result.url;
-
     // Update product with new preview image
     await db.product.update({
       where: { id: parsedProductId },
-      data: { previewImage: previewImageUrl },
+      data: { previewImage: firstImage.previewUrl },
     });
 
-    return NextResponse.json({ previewImage: previewImageUrl }, { status: 200 });
+    return NextResponse.json({ previewImage: firstImage.previewUrl }, { status: 200 });
   } catch (error) {
     console.error("Error updating preview image:", error);
     return NextResponse.json(

@@ -90,11 +90,11 @@ export async function PUT(
     }
 
     // If images are being updated, delete old images from filesystem
-    if (images) {
+    /*if (images) {
       const processor = new ImageProcessor(productId);
       const oldImageUrls = existingProduct.images.map((img: { url: string }) => img.url);
       await processor.deleteImagesByUrls(oldImageUrls);
-    }
+    }*/
 
     // Update product
     const product = await db.product.update({
