@@ -220,8 +220,8 @@ export class ImageProcessor {
     }
 
     return {
-      url: path.join("/productImages", relativePath).replaceAll("\\", "/"),
-      previewUrl: path.join("/productImages", relativePreviewPath).replaceAll("\\", "/")
+      url: path.join("/public/productImages", relativePath).replaceAll("\\", "/"),
+      previewUrl: path.join("/public/productImages", relativePreviewPath).replaceAll("\\", "/")
     };
   }
 
