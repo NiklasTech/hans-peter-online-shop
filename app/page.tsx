@@ -7,79 +7,84 @@ import { db } from "@/lib/db";
 
 export default async function Home() {
   // Lade echte Daten aus der Datenbank
-  const [featuredProducts, newProducts, categories, brands] = await Promise.all([
-    // Empfohlene Produkte: Zufällige Auswahl von 5 Produkten
-    db.product.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        reviews: {
-          select: { rating: true }
-        }
-      }
-    }),
+  const [featuredProducts, newProducts, categories, brands] = await Promise.all(
+    [
+      // Empfohlene Produkte: Zufällige Auswahl von 5 Produkten
+      db.product.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: {
+          reviews: {
+            select: { rating: true },
+          },
+        },
+      }),
 
-    // Neue Produkte: Neueste 5 Produkte
-    db.product.findMany({
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      skip: 5, // Überspringe die ersten 5, damit andere Produkte gezeigt werden
-      include: {
-        reviews: {
-          select: { rating: true }
-        }
-      }
-    }),
+      // Neue Produkte: Neueste 5 Produkte
+      db.product.findMany({
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        skip: 5, // Überspringe die ersten 5, damit andere Produkte gezeigt werden
+        include: {
+          reviews: {
+            select: { rating: true },
+          },
+        },
+      }),
 
-    // Kategorien mit Produktanzahl
-    db.category.findMany({
-      include: {
-        products: {
-          select: { productId: true }
-        }
-      }
-    }),
+      // Kategorien mit Produktanzahl
+      db.category.findMany({
+        include: {
+          products: {
+            select: { productId: true },
+          },
+        },
+      }),
 
-    // Alle Marken laden (für zufällige Auswahl)
-    db.brand.findMany({
-      include: {
-        _count: {
-          select: { products: true }
-        }
-      }
-    })
-  ]);
+      // Alle Marken laden (für zufällige Auswahl)
+      db.brand.findMany({
+        include: {
+          _count: {
+            select: { products: true },
+          },
+        },
+      }),
+    ],
+  );
 
   // Zufällige 5 Marken auswählen (deterministisch für SSR)
   const shuffledBrands = brands.slice(0, 5);
 
   // Transformiere Produkte für ProductSection
   const transformProducts = (products: typeof featuredProducts) =>
-    products.map(p => ({
+    products.map((p) => ({
       id: p.id.toString(),
       name: p.name,
       price: p.price,
       salePrice: p.salePrice || undefined,
-      rating: p.reviews.length > 0
-        ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length
-        : 0,
-      image: p.previewImage || undefined
+      rating:
+        p.reviews.length > 0
+          ? p.reviews.reduce((acc, r) => acc + r.rating, 0) / p.reviews.length
+          : 0,
+      image: p.previewImage || undefined,
     }));
 
   // Transformiere Kategorien
-  const transformedCategories = categories.map(c => ({
+  const transformedCategories = categories.map((c) => ({
     id: c.id.toString(),
     name: c.name,
     productCount: c.products.length,
-    image: c.image || 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=60'
+    image:
+      c.image ||
+      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=500&q=60",
   }));
 
   // Transformiere Marken (zufällige Auswahl)
-  const transformedBrands = shuffledBrands.map(b => ({
+  const transformedBrands = shuffledBrands.map((b) => ({
     id: b.id.toString(),
     name: b.name,
     description: b.description || `${b._count.products} Produkte`,
-    logo: b.image || undefined
+    logo: b.image || undefined,
   }));
 
   return (
@@ -136,10 +141,7 @@ export default async function Home() {
             />
           </div>
 
-          <BrandSection
-            title="Unsere Marken"
-            brands={transformedBrands}
-          />
+          <BrandSection title="Unsere Marken" brands={transformedBrands} />
         </div>
       </main>
       <Footer />
