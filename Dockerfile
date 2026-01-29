@@ -1,62 +1,41 @@
-# Dockerfile für Hans Peter Online Shop
-FROM node:20-alpine AS base
+FROM node:20-alpine
 
-# Installiere Abhängigkeiten nur wenn nötig
-FROM base AS deps
-RUN apk add --no-cache libc6-compat git
+# Installiere notwendige Dependencies
+RUN apk add --no-cache libc6-compat openssl
+
 WORKDIR /app
 
-# Kopiere package.json und package-lock.json
+# Setze npm config für bessere Netzwerk-Stabilität
+RUN npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-timeout 300000 && \
+    npm config set registry https://registry.npmjs.org/
+
+# Kopiere package files
 COPY package*.json ./
-RUN npm install
 
-# Build-Stage
-FROM base AS builder
-RUN apk add --no-cache git libc6-compat openssl
+# Installiere dependencies mit mehreren Retries
+RUN npm ci || npm ci || npm ci
 
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+# Kopiere Prisma Schema
+COPY prisma ./prisma/
 
-# Generiere Prisma Client (DATABASE_URL wird als Build-Argument übergeben)
-ARG DATABASE_URL
+# Generiere Prisma Client
 RUN npx prisma generate
 
-# Build Next.js App
+# Kopiere den Rest der Anwendung
+COPY . .
+
+# Build Next.js
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 RUN npm run build
 
-# Production-Stage
-FROM base AS runner
-RUN apk add --no-cache openssl bash
-WORKDIR /app
-
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# Kopiere notwendige Dateien
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-
-# Kopiere Startup-Script
-COPY --chown=nextjs:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
-RUN chmod +x /app/docker-entrypoint.sh
-
-# Setze Berechtigungen
-RUN mkdir -p /app/public/productImages
-
-USER nextjs
+# Setze Port
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
 EXPOSE 3000
 
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["/app/docker-entrypoint.sh"]
+# Starte die Anwendung
+CMD ["npm", "run", "start"]
