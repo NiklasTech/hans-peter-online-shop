@@ -43,7 +43,9 @@
       "Bash(set PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=Alles gut ich führe den datenbank reset aus ichhabe ja das backuo und kann alles neu laden)",
       "Bash(npx tsc:*)",
       "Bash(node:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(python -m markitdown:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []

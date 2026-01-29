@@ -1,6 +1,6 @@
 "use client";
 
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Check } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import WishlistButton from "@/components/WishlistButton";
@@ -26,6 +26,8 @@ export default function ProductCard({
   const displayPrice = isOnSale ? salePrice : price;
   const discountPercent = isOnSale && price ? Math.round((1 - salePrice / price) * 100) : 0;
   const [isMounted, setIsMounted] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
 
   // Wait for client-side hydration before adding cache buster
   useEffect(() => {
@@ -36,6 +38,41 @@ export default function ProductCard({
   const cacheBustedImage = isMounted && image && !image.startsWith('data:') && !image.startsWith('blob:')
     ? `${image}${image.includes('?') ? '&' : '?'}v=${Date.now()}`
     : image;
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation to product detail page
+    e.stopPropagation();
+
+    setIsAddingToCart(true);
+    try {
+      const response = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: Number(id),
+          quantity: 1,
+        }),
+      });
+
+      if (response.ok) {
+        setAddedToCart(true);
+        window.dispatchEvent(new CustomEvent("cart-updated"));
+
+        // Reset "added" state after 2 seconds
+        setTimeout(() => {
+          setAddedToCart(false);
+        }, 2000);
+      } else {
+        const data = await response.json();
+        alert(data.error || "Fehler beim Hinzufügen zum Warenkorb");
+      }
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      alert("Ein Fehler ist aufgetreten");
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   return (
     <Link href={`/product/${id}`} className="group cursor-pointer block">
@@ -66,8 +103,21 @@ export default function ProductCard({
         </div>
 
         {/* Add to Cart Button - appears on hover */}
-        <button className="absolute bottom-4 right-4 bg-white dark:bg-slate-900 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <ShoppingCart className="h-5 w-5 dark:text-white" />
+        <button
+          onClick={handleAddToCart}
+          disabled={isAddingToCart}
+          className={`absolute bottom-4 right-4 rounded-full p-3 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 ${
+            addedToCart
+              ? "bg-green-500 dark:bg-green-600"
+              : "bg-white dark:bg-slate-900 hover:bg-gray-100 dark:hover:bg-slate-800"
+          } ${isAddingToCart ? "cursor-wait" : "cursor-pointer"}`}
+          title={addedToCart ? "Zum Warenkorb hinzugefügt!" : "Zum Warenkorb hinzufügen"}
+        >
+          {addedToCart ? (
+            <Check className="h-5 w-5 text-white" />
+          ) : (
+            <ShoppingCart className={`h-5 w-5 dark:text-white ${isAddingToCart ? "animate-pulse" : ""}`} />
+          )}
         </button>
       </div>
 
