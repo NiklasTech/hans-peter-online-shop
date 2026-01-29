@@ -1,0 +1,55 @@
+services:
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hans-peter-online-shop-nextjs
+    restart: unless-stopped
+    ports:
+      - "3053:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/HansPeter?schema=public
+      - BASE_PRODUCT_IMAGE_URL=https://hans-peter.johannesbot.de/productImages/
+      - BASE_PRODUCT_IMAGE_SYS_PATH=/app/public/productImages/
+      - GMAIL_CLIENT_ID=secret
+      - GMAIL_CLIENT_SECRET=secret
+      - GMAIL_REDIRECT_URI=https://hans-peter.johannesbot.de
+      - GMAIL_REFRESH_TOKEN=secret
+      - NEXT_PUBLIC_APP_URL=https://hans-peter.johannesbot.de
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hans-peter-network
+    volumes:
+      - ./.env:/app/.env
+      - ./public/ProductImages:/app/public/productImages
+    command: npm run start
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: hans-peter-online-shop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: HansPeter
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hans-peter-network
+
+
+networks:
+  hans-peter-network:
+    driver: bridge
