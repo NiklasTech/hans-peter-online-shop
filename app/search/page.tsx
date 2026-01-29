@@ -12,6 +12,7 @@ interface SearchProduct {
   name: string;
   description?: string | null;
   price: number;
+  salePrice?: number | null;
   previewImage?: string | null;
   stock: number;
   brand?: { name: string };
@@ -34,6 +35,7 @@ export default function SearchPage() {
   const minPriceParam = searchParams.get("minPrice");
   const maxPriceParam = searchParams.get("maxPrice");
   const inStockParam = searchParams.get("inStock");
+  const discountParam = searchParams.get("discount");
 
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
@@ -43,9 +45,10 @@ export default function SearchPage() {
       brandsParam ||
       minPriceParam ||
       maxPriceParam ||
-      inStockParam === "true"
+      inStockParam === "true" ||
+      discountParam === "true"
     );
-  }, [initialQuery, categoriesParam, brandsParam, minPriceParam, maxPriceParam, inStockParam]);
+  }, [initialQuery, categoriesParam, brandsParam, minPriceParam, maxPriceParam, inStockParam, discountParam]);
 
   // Build search description
   const filterDescription = useMemo(() => {
@@ -65,8 +68,11 @@ export default function SearchPage() {
     if (inStockParam === "true") {
       parts.push("Nur verfügbar");
     }
+    if (discountParam === "true") {
+      parts.push("Im Sale");
+    }
     return parts.join(", ");
-  }, [initialQuery, categoriesParam, brandsParam, minPriceParam, maxPriceParam, inStockParam]);
+  }, [initialQuery, categoriesParam, brandsParam, minPriceParam, maxPriceParam, inStockParam, discountParam]);
 
   useEffect(() => {
     if (hasActiveFilters) {
@@ -206,6 +212,12 @@ export default function SearchPage() {
                     Nur verfügbar
                   </Badge>
                 )}
+                {discountParam === "true" && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Filter className="h-3 w-3" />
+                    Im Sale
+                  </Badge>
+                )}
               </div>
             )}
           </div>
@@ -279,9 +291,23 @@ export default function SearchPage() {
 
                     {/* Price and Stock */}
                     <div className="flex items-center justify-between pt-2">
-                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                        {formatPrice(product.price)}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        {product.salePrice &&
+                        product.salePrice < product.price ? (
+                          <>
+                            <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
+                              {formatPrice(product.price)}
+                            </span>
+                            <span className="text-lg font-bold text-red-600 dark:text-red-400">
+                              {formatPrice(product.salePrice)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                            {formatPrice(product.price)}
+                          </span>
+                        )}
+                      </div>
                       {product.stock > 0 ? (
                         <Badge variant="default" className="text-xs">
                           Auf Lager

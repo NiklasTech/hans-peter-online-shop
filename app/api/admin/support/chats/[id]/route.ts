@@ -83,6 +83,18 @@ export async function PATCH(
             email: true,
           },
         },
+        messages: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
 

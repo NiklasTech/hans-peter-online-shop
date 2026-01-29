@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 
 /**
  * Product Search API
- * GET /api/products/search?q=query&categories=1,2&brands=1,2&minPrice=0&maxPrice=100&inStock=true
+ * GET /api/products/search?q=query&categories=1,2&brands=1,2&minPrice=0&maxPrice=100&inStock=true&discount=true
  *
  * Searches and filters products by:
  * - Product name (q parameter)
@@ -15,6 +15,7 @@ import { Prisma } from "@prisma/client";
  * - Brands (brands parameter - comma separated IDs)
  * - Price range (minPrice, maxPrice parameters)
  * - Stock availability (inStock parameter)
+ * - Discount/Sale (discount parameter - shows only products with salePrice)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     const minPriceParam = searchParams.get("minPrice");
     const maxPriceParam = searchParams.get("maxPrice");
     const inStockParam = searchParams.get("inStock");
+    const discountParam = searchParams.get("discount");
 
     // Parse filter parameters
     const categoryIds = categoriesParam
@@ -36,6 +38,7 @@ export async function GET(request: NextRequest) {
     const minPrice = minPriceParam ? parseFloat(minPriceParam) : null;
     const maxPrice = maxPriceParam ? parseFloat(maxPriceParam) : null;
     const inStockOnly = inStockParam === "true";
+    const discountOnly = discountParam === "true";
 
     // Check if any filter is active
     const hasFilters =
@@ -44,7 +47,8 @@ export async function GET(request: NextRequest) {
       brandIds.length > 0 ||
       minPrice !== null ||
       maxPrice !== null ||
-      inStockOnly;
+      inStockOnly ||
+      discountOnly;
 
     // Return empty results if no query or filters provided
     if (!hasFilters) {
@@ -141,6 +145,15 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Discount filter - only products with salePrice
+    if (discountOnly) {
+      andConditions.push({
+        salePrice: {
+          not: null,
+        },
+      });
+    }
+
     // Query products with relations
     const products = await db.product.findMany({
       where: whereConditions,
@@ -183,6 +196,7 @@ export async function GET(request: NextRequest) {
       name: product.name,
       description: product.description,
       price: product.price,
+      salePrice: product.salePrice,
       previewImage: product.previewImage || product.images[0]?.url || null,
       stock: product.stock,
       brand: product.brand,
