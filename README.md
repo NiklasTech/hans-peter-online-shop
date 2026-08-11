@@ -1,128 +1,126 @@
 # Hans Peter Online Shop
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+A full-stack e-commerce web application built with Next.js, PostgreSQL and Prisma ORM. The project started as a school project and now serves as a reference implementation for building a complete shop system with a relational database layer modeled in Prisma.
 
-## Project Stack
+## Tech Stack
 
-- **Frontend:** Next.js 16 + React 19 + TypeScript
-- **Styling:** Tailwind CSS 4 + shadcn/ui
-- **Backend:** Next.js API Routes + Socket.IO (WebSockets)
-- **Database:** PostgreSQL + Prisma ORM
-- **DevOps:** Docker Compose
+| Area | Technology |
+| --- | --- |
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS 4, shadcn/ui |
+| Database | PostgreSQL with Prisma 7 as ORM |
+| Realtime | Socket.IO (customer support chat) |
+| Auth | Session-based authentication, bcryptjs password hashing, JWT |
+| Validation | Zod, React Hook Form |
+| Email | Nodemailer with Gmail API |
+| DevOps | Docker, Docker Compose |
+
+## Features
+
+### Storefront
+
+- Product catalog with categories, subcategories and brands
+- Product detail pages with image gallery, technical details and reviews
+- Full-text product search
+- Shopping cart and wishlists
+- Checkout with address management, payment and shipping method selection
+- Order history and order tracking in the user account
+
+### Administration
+
+- Admin dashboard for product, category and brand management
+- Order management with status, payment status and tracking number
+- Customer support chat with realtime updates via Socket.IO
+
+### Database Layer (Prisma)
+
+- 17 models covering users, addresses, products, categories, brands, cart, wishlists, orders, reviews, support chats and admin sessions
+- Relational modeling with one-to-many, many-to-many and self-referencing relations
+- Composite primary keys, unique constraints and indexes for query performance
+- Versioned schema migrations in `prisma/migrations`
+- Idempotent seed scripts for users, products and orders, including generated demo data via Faker and product images via Unsplash/Pexels
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20 or newer
+- A PostgreSQL database (or Docker for the compose setup)
+
+### Setup
+
+1. Clone the repository and install dependencies:
+
+```bash
+git clone https://github.com/NiklasTech/hans-peter-online-shop.git
+cd hans-peter-online-shop
+npm install
+```
+
+2. Create a `.env` file based on `example.env` and set your database connection:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/HansPeter?schema=public"
+```
+
+3. Apply the migrations and seed the database:
+
+```bash
+npm run db:migrate:deploy
+npm run db:seed:all
+```
+
+4. Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The application runs on [http://localhost:3000](http://localhost:3000). It uses a custom server (`server.ts`) that combines Next.js with the Socket.IO websocket server.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-## Git Workflow & Branch Strategy
-
-### Quick Start - Working with Branches
-
-**1. Pick an Issue from GitHub**
-- Go to [Issues](https://github.com/NiklasTech/hans-peter-online-shop/issues)
-- Find the issue you want to work on
-- Note the issue number (e.g., #1, #5, #23)
-
-**2. Create a Branch**
-```bash
-# Feature branch
-git checkout -b feature/#<ISSUE_NUMBER>-<description>
-
-# Example:
-git checkout -b feature/#1-navbar
-git checkout -b feature/#5-product-card
-
-# For admin features (no issue number needed)
-git checkout -b admin-dashboard
-```
-
-**3. Make Your Changes**
-```bash
-# Edit files...
-git add .
-git commit -m "feat: Add navbar component (#1)"
-git push -u origin feature/#1-navbar
-```
-
-**4. Create a Pull Request on GitHub**
-- GitHub will show "Compare & Pull Request" button
-- Add title: `feat: Add navbar component`
-- Add description: What did you do?
-- Click "Create Pull Request"
-
-**5. After Review & Merge**
-```bash
-git checkout main
-git pull origin main
-git branch -d feature/#1-navbar
-```
-
-### Branch Naming Rules
-
-✅ **Allowed:**
-- `feature/#1-navbar`
-- `bugfix/#10-cart-error`
-- `hotfix/#20-payment-issue`
-- `admin-dashboard`
-- Groß-/Kleinschreibung ist egal
-- Minuse sind erlaubt
-
-❌ **Not Allowed:**
-- `my-feature` (keine Issue-Nummer)
-- `fix-bug` (falsches Format)
-- Direct commits zu `main` (PR verwenden)
-
-### Common Commands
+A production setup with the app and a PostgreSQL container is available via Docker Compose:
 
 ```bash
-# List branches
-git branch -a
-
-# Switch branches
-git checkout main
-git checkout feature/#1-navbar
-
-# Push your branch
-git push origin feature/#1-navbar
-
-# Pull latest from main
-git checkout main
-git pull origin main
-
-# Delete local branch
-git branch -d feature/#1-navbar
-
-# Delete remote branch
-git push origin --delete feature/#1-navbar
+docker compose up
 ```
 
-For more details, see [BRANCHING-STRATEGY.md](./BRANCHING-STRATEGY.md)
+See `Dockerfile.example`, `server-compose-example.yaml` and `docker-entrypoint.sh` for the reference deployment configuration.
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/            Next.js App Router pages, layouts and API routes
+  api/          REST endpoints (auth, products, cart, orders, chat, admin, ...)
+  admin/        Admin dashboard pages
+components/     React components and shadcn/ui building blocks
+hooks/          Custom React hooks
+lib/            Shared server utilities (Prisma client, auth, validation, sockets)
+prisma/         Prisma schema, migrations and seed scripts
+scripts/        Database backup and restore scripts
+doc/            Architecture and feature documentation
+public/         Static assets
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Available Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the development server with Socket.IO |
+| `npm run build` | Create a production build |
+| `npm run db:migrate:deploy` | Apply migrations to the database |
+| `npm run db:migrate:dev` | Create and apply a new migration in development |
+| `npm run db:seed:all` | Seed users, products and orders |
+| `npm run db:reset` | Clear the database and reseed everything |
+| `npm run db:backup` / `db:restore` | Backup or restore the database |
+
+## Documentation
+
+Additional documentation lives in the `doc/` directory, including:
+
+- [Prisma guide](doc/PRISMA-GUIDE.md)
+- [Database setup with Prisma 7](doc/PRISMA7-DB-SETUP.md)
+- [Seeding documentation](prisma/SEEDING.md)
+- [Admin product management](doc/ADMIN-PRODUCT-MANAGEMENT.md)
+- [Email setup](EMAIL_SETUP.md)
